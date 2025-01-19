@@ -5,7 +5,7 @@ import 'package:weddingform/authentication_widget.dart';
 import 'package:weddingform/form_widget.dart';
 
 Future main() async {
-  await dotenv.load(isOptional: true);
+  await dotenv.load(isOptional: true, fileName: 'dotenv');
   runApp(const WeddingFormApp());
 }
 

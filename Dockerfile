@@ -1,21 +1,7 @@
-FROM dart:stable AS build
-
-WORKDIR /app
-
-COPY pubspec.* /app/
-RUN dart pub get
-
-COPY . /app/
-
-ARG SECRET_COFFEE
-ARG SECRET_FESTIVITIES
-RUN flutter build web --release \
-    --dart-define=SECRET1=${SECRET_COFFEE} \
-    --dart-define=SECRET2=${SECRET_FESTIVITIES}
-
 FROM nginx:alpine
 
-COPY --from=build /app/build/web /usr/share/nginx/html
+COPY build/web /usr/share/nginx/html
+COPY assets/dotenv /usr/share/nginx/html/assets/dotenv
 
 EXPOSE 80
 
