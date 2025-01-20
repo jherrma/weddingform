@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:weddingform/Models/authentication_state.dart';
 
 class AuthenticationWidget extends StatefulWidget {
@@ -27,20 +26,8 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
   @override
   void initState() {
     super.initState();
-    secretCoffee = secretCoffee == secretDefaultValue
-        ? dotenv.get('SECRET_COFFEE', fallback: secretDefaultValue)
-        : secretCoffee;
-    secretFestivities = secretFestivities == secretDefaultValue
-        ? dotenv.get('SECRET_FESTIVITIES', fallback: secretDefaultValue)
-        : secretFestivities;
-  }
-
-  bool _areSecretsTheDefaultValue() {
-    if (secretCoffee == secretDefaultValue ||
-        secretFestivities == secretDefaultValue) {
-      return true;
-    }
-    return false;
+    secretCoffee = "coffee";
+    secretFestivities = "fest";
   }
 
   void _validatePassword() {
@@ -65,31 +52,26 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return _areSecretsTheDefaultValue()
-        ? Center(
-            child: Text(
-                "Secrets for password have the default secret values! You must set them in the environment variables."),
-          )
-        : Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              TextFormField(
-                controller: _passwordController,
-                obscureText: true,
-                decoration: const InputDecoration(labelText: 'Enter password'),
-                onFieldSubmitted: (_) => _validatePassword(),
-              ),
-              const SizedBox(height: 16),
-              ElevatedButton(
-                onPressed: _validatePassword,
-                child: const Text('Submit'),
-              ),
-              if (showError)
-                const Text(
-                  'Incorrect password',
-                  style: TextStyle(color: Colors.red),
-                ),
-            ],
-          );
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TextFormField(
+          controller: _passwordController,
+          obscureText: true,
+          decoration: const InputDecoration(labelText: 'Enter password'),
+          onFieldSubmitted: (_) => _validatePassword(),
+        ),
+        const SizedBox(height: 16),
+        ElevatedButton(
+          onPressed: _validatePassword,
+          child: const Text('Submit'),
+        ),
+        if (showError)
+          const Text(
+            'Incorrect password',
+            style: TextStyle(color: Colors.red),
+          ),
+      ],
+    );
   }
 }

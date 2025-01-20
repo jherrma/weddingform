@@ -22,11 +22,14 @@ class _FormWidgetState extends State<FormWidget> {
   bool showMealError = false;
   bool showCakeError = false;
   bool showContributionError = false;
+  bool showWhoComingError = false;
+  bool showContactInfoError = false;
 
   final _nameController = TextEditingController();
   final _peopleController = TextEditingController();
-  final _cakeController = TextEditingController();
+  final _cakeFlavorController = TextEditingController();
   final _topicController = TextEditingController();
+  final _contactInfoController = TextEditingController();
 
   final TextEditingController _startersOption1Controller =
       TextEditingController();
@@ -34,10 +37,34 @@ class _FormWidgetState extends State<FormWidget> {
       TextEditingController();
   final TextEditingController _mainOption1Controller = TextEditingController();
   final TextEditingController _mainOption2Controller = TextEditingController();
+  final TextEditingController _mainOption3Controller = TextEditingController();
   final TextEditingController _dessertOption1Controller =
       TextEditingController();
   final TextEditingController _dessertOption2Controller =
       TextEditingController();
+  final TextEditingController _whoComingController = TextEditingController();
+
+  // Add constants for menu option texts
+  static const String doYouBringCakeText = 'Do you bring a cake?';
+  static const String noText = 'No';
+  static const String yesText = 'Yes';
+  static const String doYouHaveContributionText = 'Do you have a contribution?';
+  static const String topicLabel = 'Topic';
+
+  static const String needProjectorText = 'Need a projector';
+  static const String needMusicText = 'Need music';
+  static const String whatDoYouWantToEatText = 'What do you want to eat?';
+  static const String selectZeroText =
+      'Select \'0\' if you don\'t want a meal.';
+
+  // meal
+  static const String mainOption1Text = 'Main Option 1';
+  static const String mainOption2Text = 'Main Option 2';
+  static const String mainOption3Text = 'Main Option 3';
+  static const String dessertOption1Text = 'Dessert Option 1';
+  static const String dessertOption2Text = 'Dessert Option 2';
+  static const String starterOption1Text = 'Starter Option 1';
+  static const String starterOption2Text = 'Starter Option 2';
 
   bool _isFormValid() {
     bool foundError = false;
@@ -52,11 +79,27 @@ class _FormWidgetState extends State<FormWidget> {
         showNameError = false;
       });
     }
+
+    if (_contactInfoController.text.trim().isEmpty) {
+      setState(() {
+        showContactInfoError = true;
+      });
+      foundError = true;
+    } else {
+      setState(() {
+        showContactInfoError = false;
+      });
+    }
+
     if (isComing) {
       String peopleText = _peopleController.text.trim();
-      bool peopleValid = peopleText.isNotEmpty && int.tryParse(peopleText)! > 0;
+      int? numberOfPeople = int.tryParse(peopleText);
+      bool peopleValid =
+          peopleText.isNotEmpty && numberOfPeople != null && numberOfPeople > 0;
 
-      // Validate meal options
+      String whoComingText = _whoComingController.text.trim();
+      bool whoIsComingValid = whoComingText.isNotEmpty;
+
       bool mealValid = (_startersOption1Controller.text.trim().isNotEmpty &&
               int.tryParse(_startersOption1Controller.text.trim()) != null &&
               int.parse(_startersOption1Controller.text.trim()) >= 0) ||
@@ -69,6 +112,9 @@ class _FormWidgetState extends State<FormWidget> {
           (_mainOption2Controller.text.trim().isNotEmpty &&
               int.tryParse(_mainOption2Controller.text.trim()) != null &&
               int.parse(_mainOption2Controller.text.trim()) >= 0) ||
+          (_mainOption3Controller.text.trim().isNotEmpty &&
+              int.tryParse(_mainOption3Controller.text.trim()) != null &&
+              int.parse(_mainOption3Controller.text.trim()) >= 0) ||
           (_dessertOption1Controller.text.trim().isNotEmpty &&
               int.tryParse(_dessertOption1Controller.text.trim()) != null &&
               int.parse(_dessertOption1Controller.text.trim()) >= 0) ||
@@ -76,10 +122,9 @@ class _FormWidgetState extends State<FormWidget> {
               int.tryParse(_dessertOption2Controller.text.trim()) != null &&
               int.parse(_dessertOption2Controller.text.trim()) >= 0);
 
-      // Validate cake field
       bool cakeValid = true;
       if (isBringingCake) {
-        cakeValid = _cakeController.text.trim().isNotEmpty;
+        cakeValid = _cakeFlavorController.text.trim().isNotEmpty;
         if (!cakeValid) {
           setState(() {
             showCakeError = true;
@@ -95,7 +140,6 @@ class _FormWidgetState extends State<FormWidget> {
         });
       }
 
-      // Validate contributions if selected
       bool contributionValid = true;
       if (hasContribution) {
         contributionValid = _topicController.text.trim().isNotEmpty;
@@ -108,11 +152,15 @@ class _FormWidgetState extends State<FormWidget> {
 
       setState(() {
         showPeopleError = !peopleValid;
+        showWhoComingError = !whoIsComingValid;
         showMealError = !mealValid;
       });
 
-      foundError =
-          !peopleValid || !mealValid || !cakeValid || !contributionValid;
+      foundError = !peopleValid ||
+          !mealValid ||
+          !cakeValid ||
+          !contributionValid ||
+          !whoIsComingValid;
     }
     return !foundError;
   }
@@ -133,6 +181,16 @@ class _FormWidgetState extends State<FormWidget> {
             if (showNameError)
               Text(
                 'Please enter your name.',
+                style: TextStyle(color: Colors.red),
+              ),
+            TextField(
+              controller: _contactInfoController,
+              decoration:
+                  const InputDecoration(labelText: 'Contact Information'),
+            ),
+            if (showContactInfoError)
+              Text(
+                'Please enter your contact information.',
                 style: TextStyle(color: Colors.red),
               ),
             SizedBox(height: 16),
@@ -187,6 +245,16 @@ class _FormWidgetState extends State<FormWidget> {
                   ),
                 ],
               ),
+              // Add the new TextField below
+              TextField(
+                controller: _whoComingController,
+                decoration: const InputDecoration(labelText: 'Who is coming?'),
+              ),
+              if (showWhoComingError)
+                Text(
+                  'Please specify who is coming.',
+                  style: TextStyle(color: Colors.red),
+                ),
               if (showPeopleError)
                 Text(
                   'Please enter the number of people attending.',
@@ -196,7 +264,7 @@ class _FormWidgetState extends State<FormWidget> {
               Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  'Do you bring a cake?',
+                  doYouBringCakeText,
                   style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ),
@@ -212,7 +280,7 @@ class _FormWidgetState extends State<FormWidget> {
                           onChanged: (val) =>
                               setState(() => isBringingCake = val!),
                         ),
-                        const Text('No'),
+                        const Text(noText),
                       ],
                     ),
                   ),
@@ -226,7 +294,7 @@ class _FormWidgetState extends State<FormWidget> {
                           onChanged: (val) =>
                               setState(() => isBringingCake = val!),
                         ),
-                        const Text('Yes'),
+                        const Text(yesText),
                       ],
                     ),
                   ),
@@ -234,7 +302,7 @@ class _FormWidgetState extends State<FormWidget> {
               ),
               if (isBringingCake) ...[
                 TextField(
-                  controller: _cakeController,
+                  controller: _cakeFlavorController,
                   decoration:
                       const InputDecoration(labelText: 'Cake you bring'),
                 ),
@@ -250,7 +318,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Do you have a contribution?',
+                    doYouHaveContributionText,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
@@ -266,7 +334,7 @@ class _FormWidgetState extends State<FormWidget> {
                             onChanged: (val) =>
                                 setState(() => hasContribution = val!),
                           ),
-                          const Text('No'),
+                          const Text(noText),
                         ],
                       ),
                     ),
@@ -280,7 +348,7 @@ class _FormWidgetState extends State<FormWidget> {
                             onChanged: (val) =>
                                 setState(() => hasContribution = val!),
                           ),
-                          const Text('Yes'),
+                          const Text(yesText),
                         ],
                       ),
                     ),
@@ -289,7 +357,7 @@ class _FormWidgetState extends State<FormWidget> {
                 if (hasContribution) ...[
                   TextField(
                     controller: _topicController,
-                    decoration: const InputDecoration(labelText: 'Topic'),
+                    decoration: const InputDecoration(labelText: topicLabel),
                   ),
                   if (showContributionError)
                     Text(
@@ -297,14 +365,14 @@ class _FormWidgetState extends State<FormWidget> {
                       style: TextStyle(color: Colors.red),
                     ),
                   CheckboxListTile(
-                    title: const Text('Need a projector'),
+                    title: const Text(needProjectorText),
                     value: needProjector,
                     onChanged: (val) {
                       setState(() => needProjector = val!);
                     },
                   ),
                   CheckboxListTile(
-                    title: const Text('Need music'),
+                    title: const Text(needMusicText),
                     value: needMusic,
                     onChanged: (val) {
                       setState(() => needMusic = val!);
@@ -315,13 +383,13 @@ class _FormWidgetState extends State<FormWidget> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'What do you want to eat?',
+                    whatDoYouWantToEatText,
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                 ),
                 Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Select \'0\' if you don\'t want a meal.')),
+                    child: Text(selectZeroText)),
                 SizedBox(height: 8),
                 // Starters Section
                 Align(
@@ -334,7 +402,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Starter Option 1'),
+                      child: Text(starterOption1Text),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -349,7 +417,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Starter Option 2'),
+                      child: Text(starterOption2Text),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -373,7 +441,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Main Option 1'),
+                      child: Text(mainOption1Text),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -388,12 +456,27 @@ class _FormWidgetState extends State<FormWidget> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Main Option 2'),
+                      child: Text(mainOption2Text),
                     ),
                     SizedBox(width: 16),
                     Expanded(
                       child: TextField(
                         controller: _mainOption2Controller,
+                        keyboardType: TextInputType.number,
+                        decoration: InputDecoration(labelText: 'Quantity'),
+                      ),
+                    ),
+                  ],
+                ),
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(mainOption3Text),
+                    ),
+                    SizedBox(width: 16),
+                    Expanded(
+                      child: TextField(
+                        controller: _mainOption3Controller,
                         keyboardType: TextInputType.number,
                         decoration: InputDecoration(labelText: 'Quantity'),
                       ),
@@ -412,7 +495,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Dessert Option 1'),
+                      child: Text(dessertOption1Text),
                     ),
                     SizedBox(width: 16),
                     Expanded(
@@ -427,7 +510,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Row(
                   children: [
                     Expanded(
-                      child: Text('Dessert Option 2'),
+                      child: Text(dessertOption2Text),
                     ),
                     SizedBox(width: 16),
                     Expanded(
