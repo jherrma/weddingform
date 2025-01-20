@@ -74,7 +74,7 @@ func main() {
 		AllowMethods: "GET, POST, PUT, DELETE",
 	}))
 
-	app.Static("/", "./public")
+	app.Static("/", "./webapp")
 
 	app.Post("/validate-password", limiter.New(limiter.Config{
 		Max:        10,
@@ -116,7 +116,7 @@ func main() {
 	})
 
 	app.Post("/send-email", limiter.New(limiter.Config{
-		Max:        1,
+		Max:        2,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()

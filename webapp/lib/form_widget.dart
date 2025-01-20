@@ -135,67 +135,65 @@ class _FormWidgetState extends State<FormWidget> {
       String whoComingText = _whoComingController.text.trim();
       bool whoIsComingValid = whoComingText.isNotEmpty;
 
-      bool mealValid = (_startersOption1Controller.text.trim().isNotEmpty &&
-              int.tryParse(_startersOption1Controller.text.trim()) != null &&
-              int.parse(_startersOption1Controller.text.trim()) >= 0) ||
-          (_startersOption2Controller.text.trim().isNotEmpty &&
-              int.tryParse(_startersOption2Controller.text.trim()) != null &&
-              int.parse(_startersOption2Controller.text.trim()) >= 0) ||
-          (_mainOption1Controller.text.trim().isNotEmpty &&
-              int.tryParse(_mainOption1Controller.text.trim()) != null &&
-              int.parse(_mainOption1Controller.text.trim()) >= 0) ||
-          (_mainOption2Controller.text.trim().isNotEmpty &&
-              int.tryParse(_mainOption2Controller.text.trim()) != null &&
-              int.parse(_mainOption2Controller.text.trim()) >= 0) ||
-          (_mainOption3Controller.text.trim().isNotEmpty &&
-              int.tryParse(_mainOption3Controller.text.trim()) != null &&
-              int.parse(_mainOption3Controller.text.trim()) >= 0) ||
-          (_dessertOption1Controller.text.trim().isNotEmpty &&
-              int.tryParse(_dessertOption1Controller.text.trim()) != null &&
-              int.parse(_dessertOption1Controller.text.trim()) >= 0) ||
-          (_dessertOption2Controller.text.trim().isNotEmpty &&
-              int.tryParse(_dessertOption2Controller.text.trim()) != null &&
-              int.parse(_dessertOption2Controller.text.trim()) >= 0);
-
       bool cakeValid = true;
       if (isBringingCake) {
-        cakeValid = _cakeFlavorController.text.trim().isNotEmpty;
-        if (!cakeValid) {
-          setState(() {
-            showCakeError = true;
-          });
-        } else {
-          setState(() {
-            showCakeError = false;
-          });
-        }
-      } else {
-        setState(() {
-          showCakeError = false;
-        });
+        String cakeText = _cakeFlavorController.text.trim();
+        cakeValid = cakeText.isNotEmpty && cakeText.length > 3;
+      }
+
+      bool mealValid = true;
+      if (widget.authenticationState.authenticationType ==
+          AuthenticationType.attendingFestivities) {
+        mealValid = (_startersOption1Controller.text.trim().isNotEmpty &&
+                int.tryParse(_startersOption1Controller.text.trim()) != null &&
+                int.parse(_startersOption1Controller.text.trim()) >= 0) ||
+            (_startersOption2Controller.text.trim().isNotEmpty &&
+                int.tryParse(_startersOption2Controller.text.trim()) != null &&
+                int.parse(_startersOption2Controller.text.trim()) >= 0) ||
+            (_mainOption1Controller.text.trim().isNotEmpty &&
+                int.tryParse(_mainOption1Controller.text.trim()) != null &&
+                int.parse(_mainOption1Controller.text.trim()) >= 0) ||
+            (_mainOption2Controller.text.trim().isNotEmpty &&
+                int.tryParse(_mainOption2Controller.text.trim()) != null &&
+                int.parse(_mainOption2Controller.text.trim()) >= 0) ||
+            (_mainOption3Controller.text.trim().isNotEmpty &&
+                int.tryParse(_mainOption3Controller.text.trim()) != null &&
+                int.parse(_mainOption3Controller.text.trim()) >= 0) ||
+            (_dessertOption1Controller.text.trim().isNotEmpty &&
+                int.tryParse(_dessertOption1Controller.text.trim()) != null &&
+                int.parse(_dessertOption1Controller.text.trim()) >= 0) ||
+            (_dessertOption2Controller.text.trim().isNotEmpty &&
+                int.tryParse(_dessertOption2Controller.text.trim()) != null &&
+                int.parse(_dessertOption2Controller.text.trim()) >= 0);
       }
 
       bool contributionValid = true;
       if (hasContribution) {
-        contributionValid = _topicController.text.trim().isNotEmpty;
-        if (!contributionValid) {
-          showContributionError = true;
-        }
-      } else {
-        showContributionError = false;
+        String contributionText = _topicController.text.trim();
+        contributionValid =
+            contributionText.isNotEmpty && contributionText.length > 3;
       }
 
       setState(() {
         showPeopleError = !peopleValid;
         showWhoComingError = !whoIsComingValid;
         showMealError = !mealValid;
+        showContributionError = !contributionValid;
+        showCakeError = !cakeValid;
       });
 
-      foundError = !peopleValid ||
+      foundError = foundError ||
+          !peopleValid ||
           !mealValid ||
           !cakeValid ||
           !contributionValid ||
           !whoIsComingValid;
+
+      print('People: $peopleValid');
+      print('Who is coming: $whoIsComingValid');
+      print('Meal: $mealValid');
+      print('Contribution: $contributionValid');
+      print('Cake: $cakeValid');
     }
     return !foundError;
   }
