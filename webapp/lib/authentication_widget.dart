@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:weddingform/Models/authentication_state.dart';
 import 'package:weddingform/Models/authentication_type.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:weddingform/Services/http_service.dart';
 
 class AuthenticationWidget extends StatefulWidget {
   final Function(AuthenticationState) onAuthenticationChanged;
@@ -21,47 +22,38 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
 
   static const String secretDefaultValue = 'default';
 
-  String secretCoffee = const String.fromEnvironment('SECRET_COFFEE',
-      defaultValue: secretDefaultValue);
-  String secretFestivities = const String.fromEnvironment('SECRET_FESTIVITIES',
-      defaultValue: secretDefaultValue);
-
-  @override
-  void initState() {
-    super.initState();
-    secretCoffee = "coffee";
-    secretFestivities = "fest";
-  }
-
   void _validatePassword() async {
     String password = _passwordController.text.trim();
-    final response = await http.post(
-      Uri.parse('http://localhost:3000/validate-password'),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'password': password}),
-    );
+    try {
+      var response = await HttpService.validatePassword(password);
 
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body);
-      if (data['type'] == 0) {
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        if (data['type'] == 0) {
+          widget.onAuthenticationChanged(AuthenticationState(
+              authenticationType: AuthenticationType.attendingCoffee,
+              username: data['username'],
+              password: data['password']));
+        } else if (data['type'] == 1) {
+          widget.onAuthenticationChanged(AuthenticationState(
+              authenticationType: AuthenticationType.attendingFestivities,
+              username: data['username'],
+              password: data['password']));
+        }
+        setState(() {
+          showError = false;
+        });
+      } else {
         widget.onAuthenticationChanged(AuthenticationState(
-            authenticationType: AuthenticationType.attendingCoffee,
-            username: data['username'],
-            password: data['password']));
-      } else if (data['type'] == 1) {
-        widget.onAuthenticationChanged(AuthenticationState(
-            authenticationType: AuthenticationType.attendingFestivities,
-            username: data['username'],
-            password: data['password']));
+            authenticationType: AuthenticationType.unauthorized,
+            username: '',
+            password: ''));
+        setState(() {
+          showError = true;
+        });
       }
-      setState(() {
-        showError = false;
-      });
-    } else {
-      widget.onAuthenticationChanged(AuthenticationState(
-          authenticationType: AuthenticationType.unauthorized,
-          username: '',
-          password: ''));
+    } catch (e) {
+      print(e);
       setState(() {
         showError = true;
       });

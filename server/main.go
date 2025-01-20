@@ -10,6 +10,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/joho/godotenv"
 )
@@ -68,8 +69,15 @@ func main() {
 
 	app := fiber.New()
 
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "*",
+		AllowMethods: "GET, POST, PUT, DELETE",
+	}))
+
+	app.Static("/", "./public")
+
 	app.Post("/validate-password", limiter.New(limiter.Config{
-		Max:        5,
+		Max:        10,
 		Expiration: 1 * time.Minute,
 		KeyGenerator: func(c *fiber.Ctx) string {
 			return c.IP()
@@ -107,7 +115,18 @@ func main() {
 		}
 	})
 
-	app.Post("/send-email", basicauth.New(basicauth.Config{
+	app.Post("/send-email", limiter.New(limiter.Config{
+		Max:        1,
+		Expiration: 1 * time.Minute,
+		KeyGenerator: func(c *fiber.Ctx) string {
+			return c.IP()
+		},
+		LimitReached: func(c *fiber.Ctx) error {
+			return c.Status(fiber.StatusTooManyRequests).JSON(fiber.Map{
+				"error": "Too many attempts. Please try again later.",
+			})
+		},
+	}), basicauth.New(basicauth.Config{
 		Users: map[string]string{
 			os.Getenv(USER_COFFEE):      os.Getenv(SECRET_COFFEE),
 			os.Getenv(USER_FESTIVITIES): os.Getenv(SECRET_FESTIVITIES),
@@ -130,20 +149,22 @@ func main() {
 
 		auth := smtp.PlainAuth("Jonathan Herrmann", smtpUser, smtpPassword, smtpHost)
 
-		// Construct email headers and body
 		from := smtpUser
 		toGeneral := []string{os.Getenv(EMAIL_RECIPIENT_GENERAL)}
-		subjectGeneral := "New Form Submission - General and Meal"
-		bodyGeneral := "Name: " + data.Name + "\nContactInformation: " + data.ContactInformation +
-			"\nNumberOfPeople: " + strconv.Itoa(data.NumberOfPeople) +
-			"\nIs Coming: " + strconv.FormatBool(data.IsComing) +
-			"\nStarters Option 1: " + data.StartersOption1 +
-			"\nStarters Option 2: " + data.StartersOption2 +
-			"\nMain Option 1: " + data.MainOption1 +
-			"\nMain Option 2: " + data.MainOption2 +
-			"\nMain Option 3: " + data.MainOption3 +
+		subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
+		bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
+			"\nKommt: " + resolveBool(data.IsComing) +
+			"\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
+			"\nWer kommt: " + data.WhoIsComing +
+			"\nVorspeise Option 1: " + data.StartersOption1 +
+			"\nVorspeise Option 2: " + data.StartersOption2 +
+			"\nHauptgericht Option 1: " + data.MainOption1 +
+			"\nHauptgericht Option 2: " + data.MainOption2 +
+			"\nHauptgericht Option 3: " + data.MainOption3 +
 			"\nDessert Option 1: " + data.DessertOption1 +
-			"\nDessert Option 2: " + data.DessertOption2
+			"\nDessert Option 2: " + data.DessertOption2 +
+			"\n\n\nKontaktinformation: " + data.ContactInformation
+
 		msgGeneral := "From: " + from + "\n" +
 			"To: " + toGeneral[0] + "\n" +
 			"Subject: " + subjectGeneral + "\n\n" +
@@ -158,12 +179,12 @@ func main() {
 
 		if data.IsComing && data.DoYouBringCake {
 			toCoffee := []string{os.Getenv(EMAIL_RECIPIENT_COFFEE)}
-			subjectCoffee := "New Form Submission - Cake"
-			bodyCoffee := "Name: " + data.Name + "\nContactInformation: " + data.ContactInformation +
-				"\nNumberOfPeople: " + strconv.Itoa(data.NumberOfPeople) +
-				"\nIs Coming: " + strconv.FormatBool(data.IsComing) +
-				"\nDo You Bring Cake: " + strconv.FormatBool(data.DoYouBringCake) +
-				"\nCake Flavor: " + data.CakeFlavor
+			subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
+			bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name + "\n\nKontaktinformation: " + data.ContactInformation +
+				"\nKommt: " + resolveBool(data.IsComing) +
+				"\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
+				"\nKuchengeschmack: " + data.CakeFlavor
+
 			msgCoffee := "From: " + from + "\n" +
 				"To: " + toCoffee[0] + "\n" +
 				"Subject: " + subjectCoffee + "\n\n" +
@@ -178,14 +199,14 @@ func main() {
 
 		if data.IsComing && data.DoYouHaveContribution {
 			toFestivities := []string{os.Getenv(EMAIL_RECIPIENT_FESTIVITIES)}
-			subjectFestivities := "New Form Submission - Contribution"
-			bodyFestivities := "Name: " + data.Name + "\nContactInformation: " + data.ContactInformation +
-				"\nNumberOfPeople: " + strconv.Itoa(data.NumberOfPeople) +
-				"\nIs Coming: " + strconv.FormatBool(data.IsComing) +
-				"\nDo You Have Contribution: " + strconv.FormatBool(data.DoYouHaveContribution) +
-				"\nTopic: " + data.Topic +
-				"\nNeed Projector: " + strconv.FormatBool(data.NeedProjector) +
-				"\nNeed Music: " + strconv.FormatBool(data.NeedMusic)
+			subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag" // Updated Subject
+			bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name + "\n\nKontaktinformation: " + data.ContactInformation +
+				"\nKommt: " + resolveBool(data.IsComing) +
+				"\nHast du einen Beitrag: " + resolveBool(data.DoYouHaveContribution) +
+				"\nThema: " + data.Topic +
+				"\nBenötigst du einen Projektor: " + resolveBool(data.NeedProjector) +
+				"\nBenötigst du Musik: " + resolveBool(data.NeedMusic)
+
 			msgFestivities := "From: " + from + "\n" +
 				"To: " + toFestivities[0] + "\n" +
 				"Subject: " + subjectFestivities + "\n\n" +
@@ -202,4 +223,19 @@ func main() {
 	})
 
 	log.Fatal(app.Listen(":3000"))
+}
+
+func resolveBool(value bool) string {
+	if value {
+		return "Ja"
+	}
+	return "Nein"
+
+}
+
+func resolveIsComing(value bool) string {
+	if value {
+		return "Zusage"
+	}
+	return "Absage"
 }

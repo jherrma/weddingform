@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:weddingform/Models/authentication_state.dart';
 import 'package:weddingform/Models/authentication_type.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
+
+import 'package:weddingform/Services/http_service.dart';
 
 class FormWidget extends StatefulWidget {
   final AuthenticationState authenticationState;
@@ -29,6 +30,9 @@ class _FormWidgetState extends State<FormWidget> {
   bool showContactInfoError = false;
   bool showSubmissionError = false;
   bool formSentSuccessfully = false;
+
+  // Add submission state variable
+  bool isSubmitting = false;
 
   final _nameController = TextEditingController();
   final _peopleController = TextEditingController();
@@ -597,62 +601,76 @@ class _FormWidgetState extends State<FormWidget> {
                     ]
                   ],
                   SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () async {
-                      if (_isFormValid()) {
-                        final formData = {
-                          "name": _nameController.text,
-                          "isComing": isComing,
-                          "whoIsComing": _whoComingController.text,
-                          "numberOfPeople": int.parse(_peopleController.text),
-                          "contactInformation": _contactInfoController.text,
-                          "doYouHaveContribution": hasContribution,
-                          "topic": _topicController.text,
-                          "needProjector": needProjector,
-                          "needMusic": needMusic,
-                          "doYouBringCake": isBringingCake,
-                          "cakeFlavor": _cakeFlavorController.text,
-                          "startersOption1": _startersOption1Controller.text,
-                          "startersOption2": _startersOption2Controller.text,
-                          "mainOption1": _mainOption1Controller.text,
-                          "mainOption2": _mainOption2Controller.text,
-                          "mainOption3": _mainOption3Controller.text,
-                          "dessertOption1": _dessertOption1Controller.text,
-                          "dessertOption2": _dessertOption2Controller.text,
-                        };
+                  // Replace ElevatedButton with loading spinner when submitting
+                  isSubmitting
+                      ? CircularProgressIndicator()
+                      : ElevatedButton(
+                          onPressed: () async {
+                            if (_isFormValid()) {
+                              setState(() {
+                                isSubmitting = true;
+                              });
+                              final formData = {
+                                "name": _nameController.text,
+                                "isComing": isComing,
+                                "whoIsComing": _whoComingController.text,
+                                "numberOfPeople":
+                                    int.parse(_peopleController.text),
+                                "contactInformation":
+                                    _contactInfoController.text,
+                                "doYouHaveContribution": hasContribution,
+                                "topic": _topicController.text,
+                                "needProjector": needProjector,
+                                "needMusic": needMusic,
+                                "doYouBringCake": isBringingCake,
+                                "cakeFlavor": _cakeFlavorController.text,
+                                "startersOption1":
+                                    _startersOption1Controller.text,
+                                "startersOption2":
+                                    _startersOption2Controller.text,
+                                "mainOption1": _mainOption1Controller.text,
+                                "mainOption2": _mainOption2Controller.text,
+                                "mainOption3": _mainOption3Controller.text,
+                                "dessertOption1":
+                                    _dessertOption1Controller.text,
+                                "dessertOption2":
+                                    _dessertOption2Controller.text,
+                              };
 
-                        final username = widget.authenticationState.username;
-                        final password = widget.authenticationState.password;
+                              final username =
+                                  widget.authenticationState.username;
+                              final password =
+                                  widget.authenticationState.password;
 
-                        final credentials =
-                            base64Encode(utf8.encode('$username:$password'));
+                              final credentials = base64Encode(
+                                  utf8.encode('$username:$password'));
 
-                        final response = await http.post(
-                          Uri.parse('http://localhost:3000/send-email'),
-                          headers: {
-                            'Content-Type': 'application/json',
-                            'Authorization': 'Basic $credentials',
+                              final body = json.encode(formData);
+
+                              final response =
+                                  await HttpService.sendForm(credentials, body);
+
+                              if (response.statusCode == 200) {
+                                setState(() {
+                                  showSubmissionError = false;
+                                  formSentSuccessfully = true;
+                                });
+                              } else {
+                                setState(() {
+                                  showSubmissionError = true;
+                                });
+                              }
+
+                              setState(() {
+                                isSubmitting = false;
+                              });
+                            }
                           },
-                          body: jsonEncode(formData),
-                        );
-
-                        if (response.statusCode == 200) {
-                          setState(() {
-                            showSubmissionError = false;
-                            formSentSuccessfully = true;
-                          });
-                        } else {
-                          setState(() {
-                            showSubmissionError = true;
-                          });
-                        }
-                      }
-                    },
-                    child: const Text(submitButtonText),
-                  ),
+                          child: const Text(submitButtonText),
+                        ),
                   if (showSubmissionError)
                     Text(
-                      submissionErrorText, // Use constant text
+                      submissionErrorText,
                       style: TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.bold,
