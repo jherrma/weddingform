@@ -45,26 +45,50 @@ class _FormWidgetState extends State<FormWidget> {
   final TextEditingController _whoComingController = TextEditingController();
 
   // Add constants for menu option texts
-  static const String doYouBringCakeText = 'Do you bring a cake?';
-  static const String noText = 'No';
-  static const String yesText = 'Yes';
-  static const String doYouHaveContributionText = 'Do you have a contribution?';
-  static const String topicLabel = 'Topic';
+  static const String doYouBringCakeText = 'Bringst du einen Kuchen mit?';
+  static const String noText = 'Nein';
+  static const String yesText = 'Ja';
+  static const String doYouHaveContributionText =
+      'Möchtest du uns am Abend mit einem Beitrag bereichern?';
+  static const String topicLabel = 'Thema oder Beschreibung';
 
-  static const String needProjectorText = 'Need a projector';
-  static const String needMusicText = 'Need music';
-  static const String whatDoYouWantToEatText = 'What do you want to eat?';
+  static const String needProjectorText = 'Brauchst du einen Projektor?';
+  static const String needMusicText = 'Spielst du Musik ab?';
+  static const String whatDoYouWantToEatText = 'Was möchtet ihr essen?';
   static const String selectZeroText =
-      'Select \'0\' if you don\'t want a meal.';
+      'Wähle \'0\', wenn du keine Mahlzeit möchtest.';
 
   // meal
-  static const String mainOption1Text = 'Main Option 1';
-  static const String mainOption2Text = 'Main Option 2';
-  static const String mainOption3Text = 'Main Option 3';
+  static const String mainOption1Text = 'Hauptgericht Option 1';
+  static const String mainOption2Text = 'Hauptgericht Option 2';
+  static const String mainOption3Text = 'Hauptgericht Option 3';
   static const String dessertOption1Text = 'Dessert Option 1';
   static const String dessertOption2Text = 'Dessert Option 2';
-  static const String starterOption1Text = 'Starter Option 1';
-  static const String starterOption2Text = 'Starter Option 2';
+  static const String starterOption1Text = 'Vorspeise Option 1';
+  static const String starterOption2Text = 'Vorspeise Option 2';
+
+  // Extracted constants
+  static const String headerHinweis = 'Hinweis:';
+  static const String dataPrivacyNotice =
+      'Deine Angaben werden ausschließlich zum Organisieren unserer Hochzeit verwendet und gespeichert. Ausgewählte Personen, die uns beim Organisieren helfen, erhalten eine Kopie der Angaben. Deine Daten werden nicht an Dritte weitergegeben. Dein Angaben werden per Mail versendet.';
+  static const String submitButtonText = 'Absenden';
+  static const String nameLabel = 'Wie lautet dein Name?';
+  static const String contactInfoLabel =
+      'Kontaktmöglichkeit (vorzugsweise E-Mail)';
+  static const String imNotComingText = 'Ich komme nicht';
+  static const String imComingText = 'Ich komme';
+  static const String numberOfPeopleText = 'Mit wie vielen Personen kommst du?';
+  static const String whoIsComingLabel = 'Wer kommt mit?';
+  static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
+  static const String specifyCakeError =
+      'Bitte gib an, welchen Kuchen du mitbringst.';
+  static const String specifyContributionError =
+      'Bitte gib das Thema oder eine Beschreibung deines Beitrags an.';
+  static const String nameErrorText = 'Bitte gib deinen Namen an.';
+  static const String contactInfoErrorText =
+      'Bitte gib eine Kontaktmöglichkeit an.';
+  static const String whoComingErrorText = 'Bitte gib an, wer mitkommt.';
+  static const String peopleErrorText = 'Bitte gib an, zu wievielt ihr kommt.';
 
   bool _isFormValid() {
     bool foundError = false;
@@ -173,24 +197,37 @@ class _FormWidgetState extends State<FormWidget> {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Add bold header "Hinweis:"
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                headerHinweis,
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+            // Update data privacy notice to regular font weight
+            Text(
+              dataPrivacyNotice,
+              style: TextStyle(fontWeight: FontWeight.normal),
+            ),
+            // Insert a divider
+            Divider(),
             TextField(
               controller: _nameController,
-              decoration:
-                  const InputDecoration(labelText: 'What\'s your name?'),
+              decoration: const InputDecoration(labelText: nameLabel),
             ),
             if (showNameError)
               Text(
-                'Please enter your name.',
+                nameErrorText,
                 style: TextStyle(color: Colors.red),
               ),
             TextField(
               controller: _contactInfoController,
-              decoration:
-                  const InputDecoration(labelText: 'Contact Information'),
+              decoration: const InputDecoration(labelText: contactInfoLabel),
             ),
             if (showContactInfoError)
               Text(
-                'Please enter your contact information.',
+                contactInfoErrorText,
                 style: TextStyle(color: Colors.red),
               ),
             SizedBox(height: 16),
@@ -205,7 +242,7 @@ class _FormWidgetState extends State<FormWidget> {
                         groupValue: isComing,
                         onChanged: (val) => setState(() => isComing = val!),
                       ),
-                      const Text('I\'m not coming'),
+                      const Text(imNotComingText),
                     ],
                   ),
                 ),
@@ -218,7 +255,7 @@ class _FormWidgetState extends State<FormWidget> {
                         groupValue: isComing,
                         onChanged: (val) => setState(() => isComing = val!),
                       ),
-                      const Text('I\'m coming'),
+                      const Text(imComingText),
                     ],
                   ),
                 ),
@@ -230,7 +267,7 @@ class _FormWidgetState extends State<FormWidget> {
                 children: [
                   Expanded(
                     child: Text(
-                      'With how many people are you attending?',
+                      numberOfPeopleText,
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
@@ -248,16 +285,16 @@ class _FormWidgetState extends State<FormWidget> {
               // Add the new TextField below
               TextField(
                 controller: _whoComingController,
-                decoration: const InputDecoration(labelText: 'Who is coming?'),
+                decoration: const InputDecoration(labelText: whoIsComingLabel),
               ),
               if (showWhoComingError)
                 Text(
-                  'Please specify who is coming.',
+                  whoComingErrorText,
                   style: TextStyle(color: Colors.red),
                 ),
               if (showPeopleError)
                 Text(
-                  'Please enter the number of people attending.',
+                  peopleErrorText,
                   style: TextStyle(color: Colors.red),
                 ),
               SizedBox(height: 16),
@@ -303,12 +340,11 @@ class _FormWidgetState extends State<FormWidget> {
               if (isBringingCake) ...[
                 TextField(
                   controller: _cakeFlavorController,
-                  decoration:
-                      const InputDecoration(labelText: 'Cake you bring'),
+                  decoration: const InputDecoration(labelText: cakeLabel),
                 ),
                 if (showCakeError)
                   Text(
-                    'Please specify the cake you are bringing.',
+                    specifyCakeError,
                     style: TextStyle(color: Colors.red),
                   ),
               ],
@@ -361,7 +397,7 @@ class _FormWidgetState extends State<FormWidget> {
                   ),
                   if (showContributionError)
                     Text(
-                      'Please specify the topic of your contribution.',
+                      specifyContributionError,
                       style: TextStyle(color: Colors.red),
                     ),
                   CheckboxListTile(
@@ -395,7 +431,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Starters',
+                    'Vorspeisen',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -409,7 +445,7 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _startersOption1Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
@@ -424,7 +460,7 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _startersOption2Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
@@ -434,7 +470,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Main',
+                    'Hauptgerichte',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -448,7 +484,7 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _mainOption1Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
@@ -463,7 +499,7 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _mainOption2Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
@@ -478,7 +514,7 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _mainOption3Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
@@ -488,7 +524,7 @@ class _FormWidgetState extends State<FormWidget> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Dessert',
+                    'Desserts',
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
                   ),
                 ),
@@ -502,7 +538,7 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _dessertOption1Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
@@ -517,14 +553,14 @@ class _FormWidgetState extends State<FormWidget> {
                       child: TextField(
                         controller: _dessertOption2Controller,
                         keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Quantity'),
+                        decoration: InputDecoration(labelText: 'Menge'),
                       ),
                     ),
                   ],
                 ),
                 if (showMealError)
                   Text(
-                    'Please select your meal options. If you don\'t want a meal, please select 0.',
+                    'Bitte wählen Sie Ihre Essensoptionen aus. Wenn Sie kein Essen möchten, wählen Sie bitte 0.',
                     style: TextStyle(color: Colors.red),
                   ),
               ]
@@ -537,7 +573,7 @@ class _FormWidgetState extends State<FormWidget> {
                   // Submit form
                 }
               },
-              child: const Text('Submit'),
+              child: const Text(submitButtonText),
             ),
           ],
         ),

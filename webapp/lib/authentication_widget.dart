@@ -58,17 +58,17 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
         TextFormField(
           controller: _passwordController,
           obscureText: true,
-          decoration: const InputDecoration(labelText: 'Enter password'),
+          decoration: const InputDecoration(labelText: 'Passwort'),
           onFieldSubmitted: (_) => _validatePassword(),
         ),
         const SizedBox(height: 16),
         ElevatedButton(
           onPressed: _validatePassword,
-          child: const Text('Submit'),
+          child: const Text('Abschicken'),
         ),
         if (showError)
           const Text(
-            'Incorrect password',
+            'Falsches Passwort',
             style: TextStyle(color: Colors.red),
           ),
       ],
