@@ -27,7 +27,8 @@ class _FormWidgetState extends State<FormWidget> {
   bool showContributionError = false;
   bool showWhoComingError = false;
   bool showContactInfoError = false;
-  String? submissionError; // New state variable
+  bool showSubmissionError = false;
+  bool formSentSuccessfully = false;
 
   final _nameController = TextEditingController();
   final _peopleController = TextEditingController();
@@ -93,6 +94,8 @@ class _FormWidgetState extends State<FormWidget> {
       'Bitte gib eine Kontaktmöglichkeit an.';
   static const String whoComingErrorText = 'Bitte gib an, wer mitkommt.';
   static const String peopleErrorText = 'Bitte gib an, zu wievielt ihr kommt.';
+  static const String submissionErrorText =
+      'Fehler beim Absenden des Formulars. Bitte versuche es erneut.';
 
   bool _isFormValid() {
     bool foundError = false;
@@ -195,446 +198,469 @@ class _FormWidgetState extends State<FormWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            // Add bold header "Hinweis:"
-            Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                headerHinweis,
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-            // Update data privacy notice to regular font weight
-            Text(
-              dataPrivacyNotice,
-              style: TextStyle(fontWeight: FontWeight.normal),
-            ),
-            // Insert a divider
-            Divider(),
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: nameLabel),
-            ),
-            if (showNameError)
-              Text(
-                nameErrorText,
-                style: TextStyle(color: Colors.red),
-              ),
-            TextField(
-              controller: _contactInfoController,
-              decoration: const InputDecoration(labelText: contactInfoLabel),
-            ),
-            if (showContactInfoError)
-              Text(
-                contactInfoErrorText,
-                style: TextStyle(color: Colors.red),
-              ),
-            SizedBox(height: 16),
-            Column(
+    return formSentSuccessfully
+        ? Center(
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
               children: [
-                InkWell(
-                  onTap: () => setState(() => isComing = false),
-                  child: Row(
-                    children: [
-                      Radio<bool>(
-                        value: false,
-                        groupValue: isComing,
-                        onChanged: (val) => setState(() => isComing = val!),
-                      ),
-                      const Text(imNotComingText),
-                    ],
-                  ),
-                ),
-                InkWell(
-                  onTap: () => setState(() => isComing = true),
-                  child: Row(
-                    children: [
-                      Radio<bool>(
-                        value: true,
-                        groupValue: isComing,
-                        onChanged: (val) => setState(() => isComing = val!),
-                      ),
-                      const Text(imComingText),
-                    ],
-                  ),
-                ),
+                Icon(Icons.check, color: Colors.green),
+                SizedBox(width: 8),
+                Text(
+                    "Formular erfolgreich gesendet! Du kannst die Seite jetzt schließen."),
               ],
             ),
-            SizedBox(height: 16),
-            if (isComing) ...[
-              Row(
+          )
+        : SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Expanded(
+                  Align(
+                    alignment: Alignment.centerLeft,
                     child: Text(
-                      numberOfPeopleText,
+                      headerHinweis,
                       style:
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
-                  SizedBox(width: 16),
-                  Expanded(
-                    child: TextField(
-                      controller: _peopleController,
-                      keyboardType: TextInputType.number,
-                      decoration: InputDecoration(),
-                    ),
-                  ),
-                ],
-              ),
-              // Add the new TextField below
-              TextField(
-                controller: _whoComingController,
-                decoration: const InputDecoration(labelText: whoIsComingLabel),
-              ),
-              if (showWhoComingError)
-                Text(
-                  whoComingErrorText,
-                  style: TextStyle(color: Colors.red),
-                ),
-              if (showPeopleError)
-                Text(
-                  peopleErrorText,
-                  style: TextStyle(color: Colors.red),
-                ),
-              SizedBox(height: 16),
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  doYouBringCakeText,
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                ),
-              ),
-              Column(
-                children: [
-                  InkWell(
-                    onTap: () => setState(() => isBringingCake = false),
-                    child: Row(
-                      children: [
-                        Radio<bool>(
-                          value: false,
-                          groupValue: isBringingCake,
-                          onChanged: (val) =>
-                              setState(() => isBringingCake = val!),
-                        ),
-                        const Text(noText),
-                      ],
-                    ),
-                  ),
-                  InkWell(
-                    onTap: () => setState(() => isBringingCake = true),
-                    child: Row(
-                      children: [
-                        Radio<bool>(
-                          value: true,
-                          groupValue: isBringingCake,
-                          onChanged: (val) =>
-                              setState(() => isBringingCake = val!),
-                        ),
-                        const Text(yesText),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-              if (isBringingCake) ...[
-                TextField(
-                  controller: _cakeFlavorController,
-                  decoration: const InputDecoration(labelText: cakeLabel),
-                ),
-                if (showCakeError)
+                  // Update data privacy notice to regular font weight
                   Text(
-                    specifyCakeError,
-                    style: TextStyle(color: Colors.red),
+                    dataPrivacyNotice,
+                    style: TextStyle(fontWeight: FontWeight.normal),
                   ),
-              ],
-              if (widget.authenticationState.authenticationType ==
-                  AuthenticationType.attendingFestivities) ...[
-                SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    doYouHaveContributionText,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                Column(
-                  children: [
-                    InkWell(
-                      onTap: () => setState(() => hasContribution = false),
-                      child: Row(
-                        children: [
-                          Radio<bool>(
-                            value: false,
-                            groupValue: hasContribution,
-                            onChanged: (val) =>
-                                setState(() => hasContribution = val!),
-                          ),
-                          const Text(noText),
-                        ],
-                      ),
-                    ),
-                    InkWell(
-                      onTap: () => setState(() => hasContribution = true),
-                      child: Row(
-                        children: [
-                          Radio<bool>(
-                            value: true,
-                            groupValue: hasContribution,
-                            onChanged: (val) =>
-                                setState(() => hasContribution = val!),
-                          ),
-                          const Text(yesText),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-                if (hasContribution) ...[
+                  // Insert a divider
+                  Divider(),
                   TextField(
-                    controller: _topicController,
-                    decoration: const InputDecoration(labelText: topicLabel),
+                    controller: _nameController,
+                    decoration: const InputDecoration(labelText: nameLabel),
                   ),
-                  if (showContributionError)
+                  if (showNameError)
                     Text(
-                      specifyContributionError,
+                      nameErrorText,
                       style: TextStyle(color: Colors.red),
                     ),
-                  CheckboxListTile(
-                    title: const Text(needProjectorText),
-                    value: needProjector,
-                    onChanged: (val) {
-                      setState(() => needProjector = val!);
-                    },
+                  TextField(
+                    controller: _contactInfoController,
+                    decoration:
+                        const InputDecoration(labelText: contactInfoLabel),
                   ),
-                  CheckboxListTile(
-                    title: const Text(needMusicText),
-                    value: needMusic,
-                    onChanged: (val) {
-                      setState(() => needMusic = val!);
-                    },
+                  if (showContactInfoError)
+                    Text(
+                      contactInfoErrorText,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  SizedBox(height: 16),
+                  Column(
+                    children: [
+                      InkWell(
+                        onTap: () => setState(() => isComing = false),
+                        child: Row(
+                          children: [
+                            Radio<bool>(
+                              value: false,
+                              groupValue: isComing,
+                              onChanged: (val) =>
+                                  setState(() => isComing = val!),
+                            ),
+                            const Text(imNotComingText),
+                          ],
+                        ),
+                      ),
+                      InkWell(
+                        onTap: () => setState(() => isComing = true),
+                        child: Row(
+                          children: [
+                            Radio<bool>(
+                              value: true,
+                              groupValue: isComing,
+                              onChanged: (val) =>
+                                  setState(() => isComing = val!),
+                            ),
+                            const Text(imComingText),
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+                  SizedBox(height: 16),
+                  if (isComing) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            numberOfPeopleText,
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold, fontSize: 16),
+                          ),
+                        ),
+                        SizedBox(width: 16),
+                        Expanded(
+                          child: TextField(
+                            controller: _peopleController,
+                            keyboardType: TextInputType.number,
+                            decoration: InputDecoration(),
+                          ),
+                        ),
+                      ],
+                    ),
+                    // Add the new TextField below
+                    TextField(
+                      controller: _whoComingController,
+                      decoration:
+                          const InputDecoration(labelText: whoIsComingLabel),
+                    ),
+                    if (showWhoComingError)
+                      Text(
+                        whoComingErrorText,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    if (showPeopleError)
+                      Text(
+                        peopleErrorText,
+                        style: TextStyle(color: Colors.red),
+                      ),
+                    SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        doYouBringCakeText,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        InkWell(
+                          onTap: () => setState(() => isBringingCake = false),
+                          child: Row(
+                            children: [
+                              Radio<bool>(
+                                value: false,
+                                groupValue: isBringingCake,
+                                onChanged: (val) =>
+                                    setState(() => isBringingCake = val!),
+                              ),
+                              const Text(noText),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => setState(() => isBringingCake = true),
+                          child: Row(
+                            children: [
+                              Radio<bool>(
+                                value: true,
+                                groupValue: isBringingCake,
+                                onChanged: (val) =>
+                                    setState(() => isBringingCake = val!),
+                              ),
+                              const Text(yesText),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isBringingCake) ...[
+                      TextField(
+                        controller: _cakeFlavorController,
+                        decoration: const InputDecoration(labelText: cakeLabel),
+                      ),
+                      if (showCakeError)
+                        Text(
+                          specifyCakeError,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    ],
+                    if (widget.authenticationState.authenticationType ==
+                        AuthenticationType.attendingFestivities) ...[
+                      SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          doYouHaveContributionText,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          InkWell(
+                            onTap: () =>
+                                setState(() => hasContribution = false),
+                            child: Row(
+                              children: [
+                                Radio<bool>(
+                                  value: false,
+                                  groupValue: hasContribution,
+                                  onChanged: (val) =>
+                                      setState(() => hasContribution = val!),
+                                ),
+                                const Text(noText),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => setState(() => hasContribution = true),
+                            child: Row(
+                              children: [
+                                Radio<bool>(
+                                  value: true,
+                                  groupValue: hasContribution,
+                                  onChanged: (val) =>
+                                      setState(() => hasContribution = val!),
+                                ),
+                                const Text(yesText),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (hasContribution) ...[
+                        TextField(
+                          controller: _topicController,
+                          decoration:
+                              const InputDecoration(labelText: topicLabel),
+                        ),
+                        if (showContributionError)
+                          Text(
+                            specifyContributionError,
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        CheckboxListTile(
+                          title: const Text(needProjectorText),
+                          value: needProjector,
+                          onChanged: (val) {
+                            setState(() => needProjector = val!);
+                          },
+                        ),
+                        CheckboxListTile(
+                          title: const Text(needMusicText),
+                          value: needMusic,
+                          onChanged: (val) {
+                            setState(() => needMusic = val!);
+                          },
+                        ),
+                      ],
+                      SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          whatDoYouWantToEatText,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(selectZeroText)),
+                      SizedBox(height: 8),
+                      // Starters Section
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Vorspeisen',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(starterOption1Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _startersOption1Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(starterOption2Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _startersOption2Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      // Main Course Section
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Hauptgerichte',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(mainOption1Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _mainOption1Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(mainOption2Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _mainOption2Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(mainOption3Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _mainOption3Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      SizedBox(height: 16),
+                      // Dessert Section
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Desserts',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 14),
+                        ),
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(dessertOption1Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _dessertOption1Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(dessertOption2Text),
+                          ),
+                          SizedBox(width: 16),
+                          Expanded(
+                            child: TextField(
+                              controller: _dessertOption2Controller,
+                              keyboardType: TextInputType.number,
+                              decoration: InputDecoration(labelText: 'Menge'),
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (showMealError)
+                        Text(
+                          'Bitte wählen Sie Ihre Essensoptionen aus. Wenn Sie kein Essen möchten, wählen Sie bitte 0.',
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    ]
+                  ],
+                  SizedBox(height: 16),
+                  ElevatedButton(
+                    onPressed: () async {
+                      if (_isFormValid()) {
+                        final formData = {
+                          "name": _nameController.text,
+                          "isComing": isComing,
+                          "whoIsComing": _whoComingController.text,
+                          "numberOfPeople": int.parse(_peopleController.text),
+                          "contactInformation": _contactInfoController.text,
+                          "doYouHaveContribution": hasContribution,
+                          "topic": _topicController.text,
+                          "needProjector": needProjector,
+                          "needMusic": needMusic,
+                          "doYouBringCake": isBringingCake,
+                          "cakeFlavor": _cakeFlavorController.text,
+                          "startersOption1": _startersOption1Controller.text,
+                          "startersOption2": _startersOption2Controller.text,
+                          "mainOption1": _mainOption1Controller.text,
+                          "mainOption2": _mainOption2Controller.text,
+                          "mainOption3": _mainOption3Controller.text,
+                          "dessertOption1": _dessertOption1Controller.text,
+                          "dessertOption2": _dessertOption2Controller.text,
+                        };
+
+                        final username = widget.authenticationState.username;
+                        final password = widget.authenticationState.password;
+
+                        final credentials =
+                            base64Encode(utf8.encode('$username:$password'));
+
+                        final response = await http.post(
+                          Uri.parse('http://localhost:3000/send-email'),
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': 'Basic $credentials',
+                          },
+                          body: jsonEncode(formData),
+                        );
+
+                        if (response.statusCode == 200) {
+                          setState(() {
+                            showSubmissionError = false;
+                            formSentSuccessfully = true;
+                          });
+                        } else {
+                          setState(() {
+                            showSubmissionError = true;
+                          });
+                        }
+                      }
+                    },
+                    child: const Text(submitButtonText),
+                  ),
+                  if (showSubmissionError)
+                    Text(
+                      submissionErrorText, // Use constant text
+                      style: TextStyle(
+                        color: Colors.red,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                 ],
-                SizedBox(height: 16),
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    whatDoYouWantToEatText,
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-                Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(selectZeroText)),
-                SizedBox(height: 8),
-                // Starters Section
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Vorspeisen',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(starterOption1Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _startersOption1Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(starterOption2Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _startersOption2Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                // Main Course Section
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Hauptgerichte',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(mainOption1Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _mainOption1Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(mainOption2Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _mainOption2Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(mainOption3Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _mainOption3Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                SizedBox(height: 16),
-                // Dessert Section
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    'Desserts',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                  ),
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(dessertOption1Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _dessertOption1Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(dessertOption2Text),
-                    ),
-                    SizedBox(width: 16),
-                    Expanded(
-                      child: TextField(
-                        controller: _dessertOption2Controller,
-                        keyboardType: TextInputType.number,
-                        decoration: InputDecoration(labelText: 'Menge'),
-                      ),
-                    ),
-                  ],
-                ),
-                if (showMealError)
-                  Text(
-                    'Bitte wählen Sie Ihre Essensoptionen aus. Wenn Sie kein Essen möchten, wählen Sie bitte 0.',
-                    style: TextStyle(color: Colors.red),
-                  ),
-              ]
-            ],
-            SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () async {
-                if (_isFormValid()) {
-                  final formData = {
-                    "name": _nameController.text,
-                    "isComing": isComing,
-                    "whoIsComing": _whoComingController.text,
-                    "numberOfPeople": int.parse(_peopleController.text),
-                    "contactInformation": _contactInfoController.text,
-                    "doYouHaveContribution": hasContribution,
-                    "topic": _topicController.text,
-                    "needProjector": needProjector,
-                    "needMusic": needMusic,
-                    "doYouBringCake": isBringingCake,
-                    "cakeFlavor": _cakeFlavorController.text,
-                    "startersOption1": _startersOption1Controller.text,
-                    "startersOption2": _startersOption2Controller.text,
-                    "mainOption1": _mainOption1Controller.text,
-                    "mainOption2": _mainOption2Controller.text,
-                    "mainOption3": _mainOption3Controller.text,
-                    "dessertOption1": _dessertOption1Controller.text,
-                    "dessertOption2": _dessertOption2Controller.text,
-                  };
-
-                  final username = widget.authenticationState.username;
-                  final password = widget.authenticationState.password;
-
-                  final credentials =
-                      base64Encode(utf8.encode('$username:$password'));
-
-                  final response = await http.post(
-                    Uri.parse('http://localhost:3000/send-email'),
-                    headers: {
-                      'Content-Type': 'application/json',
-                      'Authorization': 'Basic $credentials',
-                    },
-                    body: jsonEncode(formData),
-                  );
-
-                  if (response.statusCode == 200) {
-                    // Handle successful submission
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      SnackBar(
-                          content: Text('Formular erfolgreich abgesendet.')),
-                    );
-                    setState(() {
-                      submissionError = null;
-                    });
-                  } else {
-                    setState(() {
-                      submissionError = 'Fehler beim Absenden des Formulars.';
-                    });
-                  }
-                }
-              },
-              child: const Text(submitButtonText),
-            ),
-            if (submissionError != null)
-              Text(
-                submissionError!,
-                style: TextStyle(color: Colors.red),
               ),
-          ],
-        ),
-      ),
-    );
+            ),
+          );
   }
 }
