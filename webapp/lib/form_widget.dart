@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:weddingform/Models/authentication_state.dart';
+import 'package:weddingform/Models/authentication_type.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class FormWidget extends StatefulWidget {
   final AuthenticationState authenticationState;
@@ -24,6 +27,7 @@ class _FormWidgetState extends State<FormWidget> {
   bool showContributionError = false;
   bool showWhoComingError = false;
   bool showContactInfoError = false;
+  String? submissionError; // New state variable
 
   final _nameController = TextEditingController();
   final _peopleController = TextEditingController();
@@ -348,8 +352,8 @@ class _FormWidgetState extends State<FormWidget> {
                     style: TextStyle(color: Colors.red),
                   ),
               ],
-              if (widget.authenticationState ==
-                  AuthenticationState.attendingFestivities) ...[
+              if (widget.authenticationState.authenticationType ==
+                  AuthenticationType.attendingFestivities) ...[
                 SizedBox(height: 16),
                 Align(
                   alignment: Alignment.centerLeft,
@@ -567,14 +571,67 @@ class _FormWidgetState extends State<FormWidget> {
             ],
             SizedBox(height: 16),
             ElevatedButton(
-              onPressed: () {
-                bool isFormValid = _isFormValid();
-                if (isFormValid) {
-                  // Submit form
+              onPressed: () async {
+                if (_isFormValid()) {
+                  final formData = {
+                    "name": _nameController.text,
+                    "isComing": isComing,
+                    "whoIsComing": _whoComingController.text,
+                    "numberOfPeople": int.parse(_peopleController.text),
+                    "contactInformation": _contactInfoController.text,
+                    "doYouHaveContribution": hasContribution,
+                    "topic": _topicController.text,
+                    "needProjector": needProjector,
+                    "needMusic": needMusic,
+                    "doYouBringCake": isBringingCake,
+                    "cakeFlavor": _cakeFlavorController.text,
+                    "startersOption1": _startersOption1Controller.text,
+                    "startersOption2": _startersOption2Controller.text,
+                    "mainOption1": _mainOption1Controller.text,
+                    "mainOption2": _mainOption2Controller.text,
+                    "mainOption3": _mainOption3Controller.text,
+                    "dessertOption1": _dessertOption1Controller.text,
+                    "dessertOption2": _dessertOption2Controller.text,
+                  };
+
+                  final username = widget.authenticationState.username;
+                  final password = widget.authenticationState.password;
+
+                  final credentials =
+                      base64Encode(utf8.encode('$username:$password'));
+
+                  final response = await http.post(
+                    Uri.parse('http://localhost:3000/send-email'),
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'Authorization': 'Basic $credentials',
+                    },
+                    body: jsonEncode(formData),
+                  );
+
+                  if (response.statusCode == 200) {
+                    // Handle successful submission
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                          content: Text('Formular erfolgreich abgesendet.')),
+                    );
+                    setState(() {
+                      submissionError = null;
+                    });
+                  } else {
+                    setState(() {
+                      submissionError = 'Fehler beim Absenden des Formulars.';
+                    });
+                  }
                 }
               },
               child: const Text(submitButtonText),
             ),
+            if (submissionError != null)
+              Text(
+                submissionError!,
+                style: TextStyle(color: Colors.red),
+              ),
           ],
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:weddingform/Models/authentication_state.dart';
+import 'package:weddingform/Models/authentication_type.dart';
 import 'package:weddingform/authentication_widget.dart';
 import 'package:weddingform/form_widget.dart';
 
@@ -32,11 +33,14 @@ class WeddingFormHomePage extends StatefulWidget {
 }
 
 class _WeddingFormHomePageState extends State<WeddingFormHomePage> {
-  AuthenticationState authenticationEnum = AuthenticationState.unauthorized;
+  AuthenticationState _authenticationState = AuthenticationState(
+      authenticationType: AuthenticationType.unauthorized,
+      username: '',
+      password: '');
 
   void _authenticationChanged(AuthenticationState authenticationState) {
     setState(() {
-      authenticationEnum = authenticationState;
+      _authenticationState = authenticationState;
     });
   }
 
@@ -50,11 +54,12 @@ class _WeddingFormHomePageState extends State<WeddingFormHomePage> {
         body: Center(
           child: Container(
               constraints: const BoxConstraints(maxWidth: 500),
-              child: authenticationEnum == AuthenticationState.unauthorized
+              child: _authenticationState.authenticationType ==
+                      AuthenticationType.unauthorized
                   ? AuthenticationWidget(
                       onAuthenticationChanged: _authenticationChanged,
                     )
-                  : FormWidget(authenticationState: authenticationEnum)),
+                  : FormWidget(authenticationState: _authenticationState)),
         ));
   }
 }

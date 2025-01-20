@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:weddingform/Models/authentication_state.dart';
+import 'package:weddingform/Models/authentication_type.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AuthenticationWidget extends StatefulWidget {
   final Function(AuthenticationState) onAuthenticationChanged;
@@ -30,20 +33,35 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
     secretFestivities = "fest";
   }
 
-  void _validatePassword() {
+  void _validatePassword() async {
     String password = _passwordController.text.trim();
-    if (password == secretCoffee) {
-      widget.onAuthenticationChanged(AuthenticationState.attendingCoffee);
-      setState(() {
-        showError = false;
-      });
-    } else if (password == secretFestivities) {
-      widget.onAuthenticationChanged(AuthenticationState.attendingFestivities);
+    final response = await http.post(
+      Uri.parse('http://localhost:3000/validate-password'),
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'password': password}),
+    );
+
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body);
+      if (data['type'] == 0) {
+        widget.onAuthenticationChanged(AuthenticationState(
+            authenticationType: AuthenticationType.attendingCoffee,
+            username: data['username'],
+            password: data['password']));
+      } else if (data['type'] == 1) {
+        widget.onAuthenticationChanged(AuthenticationState(
+            authenticationType: AuthenticationType.attendingFestivities,
+            username: data['username'],
+            password: data['password']));
+      }
       setState(() {
         showError = false;
       });
     } else {
-      widget.onAuthenticationChanged(AuthenticationState.unauthorized);
+      widget.onAuthenticationChanged(AuthenticationState(
+          authenticationType: AuthenticationType.unauthorized,
+          username: '',
+          password: ''));
       setState(() {
         showError = true;
       });

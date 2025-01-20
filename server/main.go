@@ -91,13 +91,13 @@ func main() {
 		if data.Password == secretCoffee {
 			return c.JSON(fiber.Map{
 				"type":     0,
-				"user":     os.Getenv(USER_COFFEE),
+				"username": os.Getenv(USER_COFFEE),
 				"password": secretCoffee,
 			})
 		} else if data.Password == secretFestivities {
 			return c.JSON(fiber.Map{
 				"type":     1,
-				"user":     os.Getenv(USER_FESTIVITIES),
+				"username": os.Getenv(USER_FESTIVITIES),
 				"password": secretFestivities,
 			})
 		} else {
