@@ -73,7 +73,7 @@ class _FormWidgetState extends State<FormWidget> {
 
   static const String mainOption1Text = 'Rinderschmorbraten';
   static const String mainOption2Text =
-      'Hähnchenbrust unter der Kräuterkruste mit Grillgemüse und Gnocci';
+      'Hähnchenbrust unter der Kräuterkruste mit Grillgemüse und Gnocchi';
   static const String mainOption3Text =
       'Gebackene Falafel mit Humus, Granatapfelkernen und Rosmarinkartoffeln (vegan)';
 
@@ -83,7 +83,7 @@ class _FormWidgetState extends State<FormWidget> {
   // Extracted constants
   static const String headerHinweis = 'Hinweis:';
   static const String dataPrivacyNotice =
-      'Deine Angaben werden ausschließlich zum Organisieren unserer Hochzeit verwendet und gespeichert. Ausgewählte Personen, die uns beim Organisieren helfen, erhalten eine Kopie der Angaben. Deine Daten werden nicht an Dritte weitergegeben. Dein Angaben werden per Mail versendet.';
+      'Deine Angaben werden ausschließlich zum Organisieren unserer Hochzeit verwendet und gespeichert. Ausgewählte Personen, die uns beim Organisieren helfen, erhalten eine Kopie der Angaben. Deine Daten werden nicht an Dritte weitergegeben. Deine Angaben werden per Mail versendet.';
   static const String submitButtonText = 'Absenden';
   static const String nameLabel = 'Wie lautet dein Name?';
   static const String contactInfoLabel =

@@ -161,13 +161,13 @@ func main() {
 			"\nKommt: " + resolveBool(data.IsComing) +
 			"\n\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
 			"\nWer kommt: " + data.WhoIsComing +
-			"\nVorspeise Option 1: " + data.StartersOption1 +
-			"\nVorspeise Option 2: " + data.StartersOption2 +
-			"\nHauptgericht Option 1: " + data.MainOption1 +
-			"\nHauptgericht Option 2: " + data.MainOption2 +
-			"\nHauptgericht Option 3: " + data.MainOption3 +
-			"\nDessert Option 1: " + data.DessertOption1 +
-			"\nDessert Option 2: " + data.DessertOption2 +
+			"\n\nGerichte:\nSchwäbische Hochzeitssuppe: " + data.StartersOption1 +
+			"\nBunter Beilagensalat: " + data.StartersOption2 +
+			"\nRinderschmorbraten: " + data.MainOption1 +
+			"\nHähnchenbrust auf Kräuterkruste: " + data.MainOption2 +
+			"\nGebackene Falafel: " + data.MainOption3 +
+			"\nCreme brulee: " + data.DessertOption1 +
+			"\nMousse au Chocolat: " + data.DessertOption2 +
 			"\n\n\nKontaktinformation: " + data.ContactInformation
 
 		msgGeneral := gomail.NewMessage()
