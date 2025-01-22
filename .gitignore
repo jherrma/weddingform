@@ -29,3 +29,4 @@ doc/api/
 
 **/dotenv
 **/.DS_Store
+docker-compose.yml
