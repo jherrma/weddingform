@@ -62,26 +62,29 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        TextFormField(
-          controller: _passwordController,
-          obscureText: true,
-          decoration: const InputDecoration(labelText: 'Passwort'),
-          onFieldSubmitted: (_) => _validatePassword(),
-        ),
-        const SizedBox(height: 16),
-        ElevatedButton(
-          onPressed: _validatePassword,
-          child: const Text('Abschicken'),
-        ),
-        if (showError)
-          const Text(
-            'Falsches Passwort',
-            style: TextStyle(color: Colors.red),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          TextFormField(
+            controller: _passwordController,
+            obscureText: true,
+            decoration: const InputDecoration(labelText: 'Passwort'),
+            onFieldSubmitted: (_) => _validatePassword(),
           ),
-      ],
+          const SizedBox(height: 16),
+          ElevatedButton(
+            onPressed: _validatePassword,
+            child: const Text('Abschicken'),
+          ),
+          if (showError)
+            const Text(
+              'Falsches Passwort',
+              style: TextStyle(color: Colors.red),
+            ),
+        ],
+      ),
     );
   }
 }

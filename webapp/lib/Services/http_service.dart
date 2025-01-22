@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 import 'package:http/http.dart';
+import 'package:flutter/foundation.dart';
 
 class HttpService {
   static http.Client? client;
@@ -15,7 +16,11 @@ class HttpService {
       'Access-Control-Allow-Origin': '*',
     };
 
-    var uri = Uri.parse("http://localhost:3000/validate-password");
+    String uriString = kDebugMode
+        ? 'http://localhost:3000/validate-password'
+        : '/validate-password';
+
+    var uri = Uri.parse(uriString);
     var response = await client!.post(uri,
         headers: requestHeaders, body: json.encode({'password': password}));
     return response;
@@ -31,7 +36,10 @@ class HttpService {
       'Authorization': 'Basic $credentials'
     };
 
-    var uri = Uri.parse('http://localhost:3000/send-email');
+    String uriString =
+        kDebugMode ? 'http://localhost:3000/send-email' : '/send-email';
+
+    var uri = Uri.parse(uriString);
     var response = await client!.post(
       uri,
       headers: requestHeaders,

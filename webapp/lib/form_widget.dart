@@ -68,13 +68,17 @@ class _FormWidgetState extends State<FormWidget> {
       'Wähle \'0\', wenn du keine Mahlzeit möchtest.';
 
   // meal
-  static const String mainOption1Text = 'Hauptgericht Option 1';
-  static const String mainOption2Text = 'Hauptgericht Option 2';
-  static const String mainOption3Text = 'Hauptgericht Option 3';
-  static const String dessertOption1Text = 'Dessert Option 1';
-  static const String dessertOption2Text = 'Dessert Option 2';
-  static const String starterOption1Text = 'Vorspeise Option 1';
-  static const String starterOption2Text = 'Vorspeise Option 2';
+  static const String starterOption1Text = 'Schwäbische Hochzeitssuppe';
+  static const String starterOption2Text = 'Bunter Beilagensalat';
+
+  static const String mainOption1Text = 'Rinderschmorbraten';
+  static const String mainOption2Text =
+      'Hähnchenbrust unter der Kräuterkruste mit Grillgemüse und Gnocci';
+  static const String mainOption3Text =
+      'Gebackene Falafel mit Humus, Granatapfelkernen und Rosmarinkartoffeln (vegan)';
+
+  static const String dessertOption1Text = 'Crème brûlée';
+  static const String dessertOption2Text = 'Mousse au Chocolat (vegan)';
 
   // Extracted constants
   static const String headerHinweis = 'Hinweis:';
@@ -188,14 +192,60 @@ class _FormWidgetState extends State<FormWidget> {
           !cakeValid ||
           !contributionValid ||
           !whoIsComingValid;
-
-      print('People: $peopleValid');
-      print('Who is coming: $whoIsComingValid');
-      print('Meal: $mealValid');
-      print('Contribution: $contributionValid');
-      print('Cake: $cakeValid');
     }
     return !foundError;
+  }
+
+  void _submitForm() async {
+    if (_isFormValid()) {
+      setState(() {
+        isSubmitting = true;
+      });
+      final formData = {
+        "name": _nameController.text,
+        "isComing": isComing,
+        "whoIsComing": _whoComingController.text,
+        "numberOfPeople": int.tryParse(_peopleController.text) ?? 0,
+        "contactInformation": _contactInfoController.text,
+        "doYouHaveContribution": hasContribution,
+        "topic": _topicController.text,
+        "needProjector": needProjector,
+        "needMusic": needMusic,
+        "doYouBringCake": isBringingCake,
+        "cakeFlavor": _cakeFlavorController.text,
+        "startersOption1": _startersOption1Controller.text,
+        "startersOption2": _startersOption2Controller.text,
+        "mainOption1": _mainOption1Controller.text,
+        "mainOption2": _mainOption2Controller.text,
+        "mainOption3": _mainOption3Controller.text,
+        "dessertOption1": _dessertOption1Controller.text,
+        "dessertOption2": _dessertOption2Controller.text,
+      };
+
+      final username = widget.authenticationState.username;
+      final password = widget.authenticationState.password;
+
+      final credentials = base64Encode(utf8.encode('$username:$password'));
+
+      final body = json.encode(formData);
+
+      final response = await HttpService.sendForm(credentials, body);
+
+      if (response.statusCode == 200) {
+        setState(() {
+          showSubmissionError = false;
+          formSentSuccessfully = true;
+        });
+      } else {
+        setState(() {
+          showSubmissionError = true;
+        });
+      }
+
+      setState(() {
+        isSubmitting = false;
+      });
+    }
   }
 
   @override
@@ -214,7 +264,8 @@ class _FormWidgetState extends State<FormWidget> {
           )
         : SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16.0, vertical: 32),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -521,6 +572,9 @@ class _FormWidgetState extends State<FormWidget> {
                           ),
                         ],
                       ),
+                      SizedBox(
+                        height: 5,
+                      ),
                       Row(
                         children: [
                           Expanded(
@@ -535,6 +589,9 @@ class _FormWidgetState extends State<FormWidget> {
                             ),
                           ),
                         ],
+                      ),
+                      SizedBox(
+                        height: 5,
                       ),
                       Row(
                         children: [
@@ -598,72 +655,11 @@ class _FormWidgetState extends State<FormWidget> {
                         ),
                     ]
                   ],
-                  SizedBox(height: 16),
-                  // Replace ElevatedButton with loading spinner when submitting
+                  SizedBox(height: 32),
                   isSubmitting
                       ? CircularProgressIndicator()
                       : ElevatedButton(
-                          onPressed: () async {
-                            if (_isFormValid()) {
-                              setState(() {
-                                isSubmitting = true;
-                              });
-                              final formData = {
-                                "name": _nameController.text,
-                                "isComing": isComing,
-                                "whoIsComing": _whoComingController.text,
-                                "numberOfPeople":
-                                    int.parse(_peopleController.text),
-                                "contactInformation":
-                                    _contactInfoController.text,
-                                "doYouHaveContribution": hasContribution,
-                                "topic": _topicController.text,
-                                "needProjector": needProjector,
-                                "needMusic": needMusic,
-                                "doYouBringCake": isBringingCake,
-                                "cakeFlavor": _cakeFlavorController.text,
-                                "startersOption1":
-                                    _startersOption1Controller.text,
-                                "startersOption2":
-                                    _startersOption2Controller.text,
-                                "mainOption1": _mainOption1Controller.text,
-                                "mainOption2": _mainOption2Controller.text,
-                                "mainOption3": _mainOption3Controller.text,
-                                "dessertOption1":
-                                    _dessertOption1Controller.text,
-                                "dessertOption2":
-                                    _dessertOption2Controller.text,
-                              };
-
-                              final username =
-                                  widget.authenticationState.username;
-                              final password =
-                                  widget.authenticationState.password;
-
-                              final credentials = base64Encode(
-                                  utf8.encode('$username:$password'));
-
-                              final body = json.encode(formData);
-
-                              final response =
-                                  await HttpService.sendForm(credentials, body);
-
-                              if (response.statusCode == 200) {
-                                setState(() {
-                                  showSubmissionError = false;
-                                  formSentSuccessfully = true;
-                                });
-                              } else {
-                                setState(() {
-                                  showSubmissionError = true;
-                                });
-                              }
-
-                              setState(() {
-                                isSubmitting = false;
-                              });
-                            }
-                          },
+                          onPressed: _submitForm,
                           child: const Text(submitButtonText),
                         ),
                   if (showSubmissionError)

@@ -6,13 +6,12 @@ import (
 	"strconv"
 	"time"
 
-	"net/smtp"
-
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
 	"github.com/gofiber/fiber/v2/middleware/cors"
 	"github.com/gofiber/fiber/v2/middleware/limiter"
 	"github.com/joho/godotenv"
+	"gopkg.in/gomail.v2"
 )
 
 type FormData struct {
@@ -147,14 +146,20 @@ func main() {
 		smtpUser := os.Getenv(SMTP_USER)
 		smtpPassword := os.Getenv(SMTP_PASSWORD)
 
-		auth := smtp.PlainAuth("Jonathan Herrmann", smtpUser, smtpPassword, smtpHost)
+		port, err := strconv.Atoi(smtpPort)
+		if err != nil {
+			log.Println("Invalid SMTP port")
+			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
+		}
+		mailer := gomail.NewDialer(smtpHost, port, smtpUser, smtpPassword)
+		mailer.SSL = false
 
 		from := smtpUser
 		toGeneral := []string{os.Getenv(EMAIL_RECIPIENT_GENERAL)}
 		subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
 		bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
 			"\nKommt: " + resolveBool(data.IsComing) +
-			"\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
+			"\n\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
 			"\nWer kommt: " + data.WhoIsComing +
 			"\nVorspeise Option 1: " + data.StartersOption1 +
 			"\nVorspeise Option 2: " + data.StartersOption2 +
@@ -165,57 +170,55 @@ func main() {
 			"\nDessert Option 2: " + data.DessertOption2 +
 			"\n\n\nKontaktinformation: " + data.ContactInformation
 
-		msgGeneral := "From: " + from + "\n" +
-			"To: " + toGeneral[0] + "\n" +
-			"Subject: " + subjectGeneral + "\n\n" +
-			bodyGeneral
-
-		// Send general email
-		err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, toGeneral, []byte(msgGeneral))
-		if err != nil {
-			log.Println(err)
+		msgGeneral := gomail.NewMessage()
+		msgGeneral.SetHeader("From", from)
+		msgGeneral.SetHeader("To", toGeneral[0])
+		msgGeneral.SetHeader("Subject", subjectGeneral)
+		msgGeneral.SetBody("text/plain", bodyGeneral)
+		if err := mailer.DialAndSend(msgGeneral); err != nil {
+			log.Println(err.Error())
 			return c.Status(500).JSON(fiber.Map{"error": "Error sending general and meal email"})
 		}
 
 		if data.IsComing && data.DoYouBringCake {
 			toCoffee := []string{os.Getenv(EMAIL_RECIPIENT_COFFEE)}
 			subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
-			bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name + "\n\nKontaktinformation: " + data.ContactInformation +
+			bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +
-				"\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
-				"\nKuchengeschmack: " + data.CakeFlavor
+				"\n\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
+				"\nKuchen: " + data.CakeFlavor +
+				"\n\n\nKontaktinformation: " + data.ContactInformation
 
-			msgCoffee := "From: " + from + "\n" +
-				"To: " + toCoffee[0] + "\n" +
-				"Subject: " + subjectCoffee + "\n\n" +
-				bodyCoffee
-
-			err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, toCoffee, []byte(msgCoffee))
-			if err != nil {
+			msgCoffee := gomail.NewMessage()
+			msgCoffee.SetHeader("From", from)
+			msgCoffee.SetHeader("To", toCoffee[0])
+			msgCoffee.SetHeader("Subject", subjectCoffee)
+			msgCoffee.SetBody("text/plain", bodyCoffee)
+			if err := mailer.DialAndSend(msgCoffee); err != nil {
 				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending general and cake email"})
+				return c.Status(500).JSON(fiber.Map{"error": "Error sending cake email"})
 			}
 		}
 
 		if data.IsComing && data.DoYouHaveContribution {
 			toFestivities := []string{os.Getenv(EMAIL_RECIPIENT_FESTIVITIES)}
-			subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag" // Updated Subject
-			bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name + "\n\nKontaktinformation: " + data.ContactInformation +
+			subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag"
+			bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +
-				"\nHast du einen Beitrag: " + resolveBool(data.DoYouHaveContribution) +
+				"\n\nHast du einen Beitrag: " + resolveBool(data.DoYouHaveContribution) +
 				"\nThema: " + data.Topic +
 				"\nBenötigst du einen Projektor: " + resolveBool(data.NeedProjector) +
-				"\nBenötigst du Musik: " + resolveBool(data.NeedMusic)
+				"\nBenötigst du Musik: " + resolveBool(data.NeedMusic) +
+				"\n\n\nKontaktinformation: " + data.ContactInformation
 
-			msgFestivities := "From: " + from + "\n" +
-				"To: " + toFestivities[0] + "\n" +
-				"Subject: " + subjectFestivities + "\n\n" +
-				bodyFestivities
-
-			err = smtp.SendMail(smtpHost+":"+smtpPort, auth, from, toFestivities, []byte(msgFestivities))
-			if err != nil {
+			msgFestivities := gomail.NewMessage()
+			msgFestivities.SetHeader("From", from)
+			msgFestivities.SetHeader("To", toFestivities[0])
+			msgFestivities.SetHeader("Subject", subjectFestivities)
+			msgFestivities.SetBody("text/plain", bodyFestivities)
+			if err := mailer.DialAndSend(msgFestivities); err != nil {
 				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending general and contribution email"})
+				return c.Status(500).JSON(fiber.Map{"error": "Error sending contribution email"})
 			}
 		}
 

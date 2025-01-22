@@ -4,11 +4,11 @@ WORKDIR /app
 
 COPY server/go.mod server/go.sum ./
 
-RUN CGO_ENABLED=0 GOOS=linux go mod download
+RUN go mod download
 
 COPY server .
 
-RUN go build -o main 
+RUN CGO_ENABLED=0 GOOS=linux go build -o main 
 
 FROM debian:12-slim
 
