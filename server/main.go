@@ -162,15 +162,15 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 		}
 
-		port, err := strconv.Atoi(smtpPort)
-		if err != nil {
-			log.Println("Invalid SMTP port")
-			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
-		}
-
 		var mailer *gomail.Dialer = nil
 
 		if !debug {
+			port, err := strconv.Atoi(smtpPort)
+			if err != nil {
+				log.Println("Invalid SMTP port")
+				return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
+			}
+
 			mailer := gomail.NewDialer(smtpHost, port, smtpUser, smtpPassword)
 			mailer.SSL = false
 		}
