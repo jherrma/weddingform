@@ -251,7 +251,7 @@ class _FormWidgetState extends State<FormWidget> {
         "isComing": isComing,
         "whoIsComing": _whoComingController.text,
         "numberOfPeople": int.tryParse(_peopleController.text) ?? 0,
-        "contactInformation": _emailController.text,
+        "email": _emailController.text,
         "phone": _phoneController.text,
         "doYouHaveContribution": hasContribution,
         "topic": _topicController.text,

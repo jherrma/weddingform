@@ -16,11 +16,12 @@ import (
 
 type FormData struct {
 	// general
-	Name               string `json:"name"`
-	IsComing           bool   `json:"isComing"`
-	WhoIsComing        string `json:"whoIsComing"`
-	NumberOfPeople     int    `json:"numberOfPeople"`
-	ContactInformation string `json:"contactInformation"`
+	Name           string `json:"name"`
+	IsComing       bool   `json:"isComing"`
+	WhoIsComing    string `json:"whoIsComing"`
+	NumberOfPeople int    `json:"numberOfPeople"`
+	Email          string `json:"email"`
+	Phone          string `json:"phone"`
 
 	// contribution
 	DoYouHaveContribution bool   `json:"doYouHaveContribution"`
@@ -32,14 +33,14 @@ type FormData struct {
 	DoYouBringCake bool   `json:"doYouBringCake"`
 	CakeFlavor     string `json:"cakeFlavor"`
 
-	// meal
-	StartersOption1 string `json:"startersOption1"`
-	StartersOption2 string `json:"startersOption2"`
-	MainOption1     string `json:"mainOption1"`
-	MainOption2     string `json:"mainOption2"`
-	MainOption3     string `json:"mainOption3"`
-	DessertOption1  string `json:"dessertOption1"`
-	DessertOption2  string `json:"dessertOption2"`
+	// snacks
+	DoYouBringSnacks bool   `json:"doYouBringSnacks"`
+	SnacksFlavor     string `json:"snacksFlavor"`
+
+	// rides
+	RideOption int `json:"rideOption"`
+	NeedRide   int `json:"needRide"`
+	OfferRide  int `json:"offerRide"`
 }
 
 type PasswordData struct {
@@ -50,6 +51,7 @@ const (
 	EMAIL_RECIPIENT_GENERAL     = "EMAIL_RECIPIENT_GENERAL"
 	EMAIL_RECIPIENT_COFFEE      = "EMAIL_RECIPIENT_COFFEE"
 	EMAIL_RECIPIENT_FESTIVITIES = "EMAIL_RECIPIENT_FESTIVITIES"
+	EMAIL_RIDE                  = "EMAIL_RIDE"
 	USER_COFFEE                 = "USER_COFFEE"
 	USER_FESTIVITIES            = "USER_FESTIVITIES"
 	SECRET_COFFEE               = "SECRET_COFFEE"
@@ -58,6 +60,7 @@ const (
 	SMTP_PORT                   = "SMTP_PORT"
 	SMTP_USER                   = "SMTP_USER"
 	SMTP_PASSWORD               = "SMTP_PASSWORD"
+	DEBUG                       = "DEBUG"
 )
 
 func main() {
@@ -70,7 +73,14 @@ func main() {
 	smtpPort := os.Getenv(SMTP_PORT)
 	smtpUser := os.Getenv(SMTP_USER)
 	smtpPassword := os.Getenv(SMTP_PASSWORD)
-	debugString := os.Getenv("DEBUG")
+
+	secretCoffee := os.Getenv(SECRET_COFFEE)
+	secretFestivities := os.Getenv(SECRET_FESTIVITIES)
+
+	userCoffee := os.Getenv(USER_COFFEE)
+	userFestivities := os.Getenv(USER_FESTIVITIES)
+
+	debugString := os.Getenv(DEBUG)
 	debug, err := strconv.ParseBool(debugString)
 	if err != nil {
 		debug = true
@@ -106,19 +116,16 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 		}
 
-		secretCoffee := os.Getenv(SECRET_COFFEE)
-		secretFestivities := os.Getenv(SECRET_FESTIVITIES)
-
 		if data.Password == secretCoffee {
 			return c.JSON(fiber.Map{
 				"type":     0,
-				"username": os.Getenv(USER_COFFEE),
+				"username": userCoffee,
 				"password": secretCoffee,
 			})
 		} else if data.Password == secretFestivities {
 			return c.JSON(fiber.Map{
 				"type":     1,
-				"username": os.Getenv(USER_FESTIVITIES),
+				"username": userFestivities,
 				"password": secretFestivities,
 			})
 		} else {
@@ -141,8 +148,8 @@ func main() {
 		},
 	}), basicauth.New(basicauth.Config{
 		Users: map[string]string{
-			os.Getenv(USER_COFFEE):      os.Getenv(SECRET_COFFEE),
-			os.Getenv(USER_FESTIVITIES): os.Getenv(SECRET_FESTIVITIES),
+			userCoffee:      secretCoffee,
+			userFestivities: secretFestivities,
 		},
 		Unauthorized: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -170,14 +177,8 @@ func main() {
 			"\nKommt: " + resolveBool(data.IsComing) +
 			"\n\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
 			"\nWer kommt: " + data.WhoIsComing +
-			"\nVorspeise Option 1: " + data.StartersOption1 +
-			"\nVorspeise Option 2: " + data.StartersOption2 +
-			"\nHauptgericht Option 1: " + data.MainOption1 +
-			"\nHauptgericht Option 2: " + data.MainOption2 +
-			"\nHauptgericht Option 3: " + data.MainOption3 +
-			"\nDessert Option 1: " + data.DessertOption1 +
-			"\nDessert Option 2: " + data.DessertOption2 +
-			"\n\n\nKontaktinformation: " + data.ContactInformation
+			"\n\nEmail: " + data.Email +
+			"\nMobilnummer: " + data.Phone
 
 		msgGeneral := gomail.NewMessage()
 		msgGeneral.SetHeader("From", from)
@@ -193,14 +194,17 @@ func main() {
 			log.Println("General email: " + bodyGeneral)
 		}
 
-		if data.IsComing && data.DoYouBringCake {
+		if data.IsComing && (data.DoYouBringCake || data.DoYouBringSnacks) {
 			toCoffee := []string{os.Getenv(EMAIL_RECIPIENT_COFFEE)}
 			subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
 			bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +
 				"\n\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
 				"\nKuchen: " + data.CakeFlavor +
-				"\n\n\nKontaktinformation: " + data.ContactInformation
+				"\n\nBringst du Snacks mit: " + resolveBool(data.DoYouBringSnacks) +
+				"\nSnacks: " + data.SnacksFlavor +
+				"\n\n\nEmail: " + data.Email +
+				"\nMobilnummer: " + data.Phone
 
 			msgCoffee := gomail.NewMessage()
 			msgCoffee.SetHeader("From", from)
@@ -226,7 +230,8 @@ func main() {
 				"\nThema: " + data.Topic +
 				"\nBenötigst du einen Projektor: " + resolveBool(data.NeedProjector) +
 				"\nBenötigst du Musik: " + resolveBool(data.NeedMusic) +
-				"\n\n\nKontaktinformation: " + data.ContactInformation
+				"\n\n\nEmail: " + data.Email +
+				"\nMobilnummer: " + data.Phone
 
 			msgFestivities := gomail.NewMessage()
 			msgFestivities.SetHeader("From", from)
@@ -241,6 +246,31 @@ func main() {
 			} else {
 				log.Println("Festivities email: " + bodyFestivities)
 			}
+		}
+
+		toRide := []string{os.Getenv(EMAIL_RIDE)}
+		subjectRide := "Mitfahrgelegenheit - " + resolveRides(data.RideOption)
+		bodyRide := "Name: " + data.Name +
+			"\nEmail: " + data.Email +
+			"\nMobilnummer: " + data.Phone +
+			"\nOption: " + resolveRides(data.RideOption) +
+			"\n" + resolveSeats(data.RideOption, data.NeedRide) +
+			"\n\nEmail: " + data.Email +
+			"\nMobilnummer: " + data.Phone
+
+		msgRide := gomail.NewMessage()
+		msgRide.SetHeader("From", from)
+		msgRide.SetHeader("To", toRide[0])
+		msgRide.SetHeader("Subject", subjectRide)
+		msgRide.SetBody("text/plain", bodyRide)
+
+		if !debug {
+			if err := mailer.DialAndSend(msgRide); err != nil {
+				log.Println(err)
+				return c.Status(500).JSON(fiber.Map{"error": "Error sending ride email"})
+			}
+		} else {
+			log.Println("Ride email: " + bodyRide)
 		}
 
 		return c.JSON(fiber.Map{"message": "Emails sent successfully"})
@@ -262,4 +292,24 @@ func resolveIsComing(value bool) string {
 		return "Zusage"
 	}
 	return "Absage"
+}
+
+func resolveRides(value int) string {
+	if value == 0 {
+		return "Ich fahre öffentlich"
+	} else if value == 1 {
+		return "Ich BENÖTIGE eine Mitfahrgelegenheit"
+	} else {
+		return "Ich BIETE eine Mitfahrgelegenheit"
+	}
+}
+
+func resolveSeats(rideOption int, seats int) string {
+	if rideOption == 0 {
+		return ""
+	} else if rideOption == 1 {
+		return "Plätze benötigt: " + strconv.Itoa(seats)
+	} else {
+		return "Plätze angeboten: " + strconv.Itoa(seats)
+	}
 }
