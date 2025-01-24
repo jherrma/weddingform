@@ -66,6 +66,27 @@ func main() {
 		log.Println("No .env file found")
 	}
 
+	usernameCoffee := os.Getenv(USER_COFFEE)
+	usernameFestivities := os.Getenv(USER_FESTIVITIES)
+
+	secretCoffee := os.Getenv(SECRET_COFFEE)
+	secretFestivities := os.Getenv(SECRET_FESTIVITIES)
+
+	smtpHost := os.Getenv(SMTP_HOST)
+	smtpPort := os.Getenv(SMTP_PORT)
+	smtpUser := os.Getenv(SMTP_USER)
+	smtpPassword := os.Getenv(SMTP_PASSWORD)
+
+	debugString := os.Getenv("DEBUG")
+	debug, err := strconv.ParseBool(debugString)
+	if err != nil {
+		debug = true
+	}
+
+	if debug {
+		log.Println("Debug enabled")
+	}
+
 	app := fiber.New()
 
 	app.Use(cors.New(cors.Config{
@@ -92,19 +113,16 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 		}
 
-		secretCoffee := os.Getenv(SECRET_COFFEE)
-		secretFestivities := os.Getenv(SECRET_FESTIVITIES)
-
 		if data.Password == secretCoffee {
 			return c.JSON(fiber.Map{
 				"type":     0,
-				"username": os.Getenv(USER_COFFEE),
+				"username": usernameCoffee,
 				"password": secretCoffee,
 			})
 		} else if data.Password == secretFestivities {
 			return c.JSON(fiber.Map{
 				"type":     1,
-				"username": os.Getenv(USER_FESTIVITIES),
+				"username": usernameFestivities,
 				"password": secretFestivities,
 			})
 		} else {
@@ -127,8 +145,8 @@ func main() {
 		},
 	}), basicauth.New(basicauth.Config{
 		Users: map[string]string{
-			os.Getenv(USER_COFFEE):      os.Getenv(SECRET_COFFEE),
-			os.Getenv(USER_FESTIVITIES): os.Getenv(SECRET_FESTIVITIES),
+			usernameCoffee:      secretCoffee,
+			usernameFestivities: secretFestivities,
 		},
 		Unauthorized: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -141,18 +159,17 @@ func main() {
 			return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 		}
 
-		smtpHost := os.Getenv(SMTP_HOST)
-		smtpPort := os.Getenv(SMTP_PORT)
-		smtpUser := os.Getenv(SMTP_USER)
-		smtpPassword := os.Getenv(SMTP_PASSWORD)
+		var mailer *gomail.Dialer = nil
 
-		port, err := strconv.Atoi(smtpPort)
-		if err != nil {
-			log.Println("Invalid SMTP port")
-			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
+		if !debug {
+			port, err := strconv.Atoi(smtpPort)
+			if err != nil {
+				log.Println("Invalid SMTP port")
+				return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
+			}
+			mailer = gomail.NewDialer(smtpHost, port, smtpUser, smtpPassword)
+			mailer.SSL = false
 		}
-		mailer := gomail.NewDialer(smtpHost, port, smtpUser, smtpPassword)
-		mailer.SSL = false
 
 		from := smtpUser
 		toGeneral := []string{os.Getenv(EMAIL_RECIPIENT_GENERAL)}
@@ -175,9 +192,17 @@ func main() {
 		msgGeneral.SetHeader("To", toGeneral[0])
 		msgGeneral.SetHeader("Subject", subjectGeneral)
 		msgGeneral.SetBody("text/plain", bodyGeneral)
-		if err := mailer.DialAndSend(msgGeneral); err != nil {
-			log.Println(err.Error())
-			return c.Status(500).JSON(fiber.Map{"error": "Error sending general and meal email"})
+		if !debug {
+			if err := mailer.DialAndSend(msgGeneral); err != nil {
+				log.Println(err.Error())
+				return c.Status(500).JSON(fiber.Map{"error": "Error sending general and meal email"})
+			}
+		} else {
+			log.Println("General and meal email:")
+			log.Println("From: " + from)
+			log.Println("To: " + toGeneral[0])
+			log.Println("Subject: " + subjectGeneral)
+			log.Println("Body: " + bodyGeneral)
 		}
 
 		if data.IsComing && data.DoYouBringCake {
@@ -194,9 +219,17 @@ func main() {
 			msgCoffee.SetHeader("To", toCoffee[0])
 			msgCoffee.SetHeader("Subject", subjectCoffee)
 			msgCoffee.SetBody("text/plain", bodyCoffee)
-			if err := mailer.DialAndSend(msgCoffee); err != nil {
-				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending cake email"})
+			if !debug {
+				if err := mailer.DialAndSend(msgCoffee); err != nil {
+					log.Println(err)
+					return c.Status(500).JSON(fiber.Map{"error": "Error sending cake email"})
+				}
+			} else {
+				log.Println("Cake email:")
+				log.Println("From: " + from)
+				log.Println("To: " + toCoffee[0])
+				log.Println("Subject: " + subjectCoffee)
+				log.Println("Body: " + bodyCoffee)
 			}
 		}
 
@@ -216,9 +249,17 @@ func main() {
 			msgFestivities.SetHeader("To", toFestivities[0])
 			msgFestivities.SetHeader("Subject", subjectFestivities)
 			msgFestivities.SetBody("text/plain", bodyFestivities)
-			if err := mailer.DialAndSend(msgFestivities); err != nil {
-				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending contribution email"})
+			if !debug {
+				if err := mailer.DialAndSend(msgFestivities); err != nil {
+					log.Println(err)
+					return c.Status(500).JSON(fiber.Map{"error": "Error sending contribution email"})
+				}
+			} else {
+				log.Println("Contribution email:")
+				log.Println("From: " + from)
+				log.Println("To: " + toFestivities[0])
+				log.Println("Subject: " + subjectFestivities)
+				log.Println("Body: " + bodyFestivities)
 			}
 		}
 
