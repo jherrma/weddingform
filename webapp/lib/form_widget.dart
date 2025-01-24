@@ -5,6 +5,15 @@ import 'dart:convert';
 
 import 'package:weddingform/Services/http_service.dart';
 
+enum RideOption {
+  public(0),
+  searching(1),
+  offering(2);
+
+  final int value;
+  const RideOption(this.value);
+}
+
 class FormWidget extends StatefulWidget {
   final AuthenticationState authenticationState;
 
@@ -23,7 +32,6 @@ class _FormWidgetState extends State<FormWidget> {
   bool isBringingCake = false;
   bool showNameError = false;
   bool showPeopleError = false;
-  bool showMealError = false;
   bool showCakeError = false;
   bool showContributionError = false;
   bool showWhoComingError = false;
@@ -38,20 +46,13 @@ class _FormWidgetState extends State<FormWidget> {
   final _peopleController = TextEditingController();
   final _cakeFlavorController = TextEditingController();
   final _topicController = TextEditingController();
-  final _contactInfoController = TextEditingController();
+  final _emailController = TextEditingController();
 
-  final TextEditingController _startersOption1Controller =
-      TextEditingController();
-  final TextEditingController _startersOption2Controller =
-      TextEditingController();
-  final TextEditingController _mainOption1Controller = TextEditingController();
-  final TextEditingController _mainOption2Controller = TextEditingController();
-  final TextEditingController _mainOption3Controller = TextEditingController();
-  final TextEditingController _dessertOption1Controller =
-      TextEditingController();
-  final TextEditingController _dessertOption2Controller =
-      TextEditingController();
   final TextEditingController _whoComingController = TextEditingController();
+
+  // Add a new controller and error state
+  final _phoneController = TextEditingController();
+  bool showPhoneError = false;
 
   // Add constants for menu option texts
   static const String doYouBringCakeText = 'Bringst du einen Kuchen mit?';
@@ -63,22 +64,6 @@ class _FormWidgetState extends State<FormWidget> {
 
   static const String needProjectorText = 'Brauchst du einen Projektor?';
   static const String needMusicText = 'Spielst du Musik ab?';
-  static const String whatDoYouWantToEatText = 'Was möchtet ihr essen?';
-  static const String selectZeroText =
-      'Wähle \'0\', wenn du keine Mahlzeit möchtest.';
-
-  // meal
-  static const String starterOption1Text = 'Schwäbische Hochzeitssuppe';
-  static const String starterOption2Text = 'Bunter Beilagensalat';
-
-  static const String mainOption1Text = 'Rinderschmorbraten';
-  static const String mainOption2Text =
-      'Hähnchenbrust unter der Kräuterkruste mit Grillgemüse und Gnocchi';
-  static const String mainOption3Text =
-      'Gebackene Falafel mit Humus, Granatapfelkernen und Rosmarinkartoffeln (vegan)';
-
-  static const String dessertOption1Text = 'Crème brûlée';
-  static const String dessertOption2Text = 'Mousse au Chocolat (vegan)';
 
   // Extracted constants
   static const String headerHinweis = 'Hinweis:';
@@ -86,8 +71,7 @@ class _FormWidgetState extends State<FormWidget> {
       'Deine Angaben werden ausschließlich zum Organisieren unserer Hochzeit verwendet und gespeichert. Ausgewählte Personen, die uns beim Organisieren helfen, erhalten eine Kopie der Angaben. Deine Daten werden nicht an Dritte weitergegeben. Deine Angaben werden per Mail versendet.';
   static const String submitButtonText = 'Absenden';
   static const String nameLabel = 'Wie lautet dein Name?';
-  static const String contactInfoLabel =
-      'Kontaktmöglichkeit (vorzugsweise E-Mail)';
+  static const String emailLabel = 'Wie lautet deine E-Mail-Adresse?';
   static const String imNotComingText = 'Ich komme nicht';
   static const String imComingText = 'Ich komme';
   static const String numberOfPeopleText = 'Mit wie vielen Personen kommst du?';
@@ -105,10 +89,28 @@ class _FormWidgetState extends State<FormWidget> {
   static const String submissionErrorText =
       'Fehler beim Absenden des Formulars. Bitte versuche es erneut.';
 
+  static const String phoneLabel = 'Wie lautet deine Mobilnummer?';
+  static const String phoneErrorText = 'Bitte gib deine Mobilnummer an.';
+
+  bool isBringingSnacks = false;
+  final TextEditingController _snacksController = TextEditingController();
+  bool showSnacksError = false;
+
+  static const String doYouBringSnacksText = 'Bringst du Häppchen mit?';
+  static const String snacksLabel = 'Welche Häppchen bringst du mit?';
+  static const String snacksErrorText =
+      'Bitte gib an, welche Häppchen du mitbringst.';
+
+  RideOption rideOption = RideOption.public;
+  final _needRideController = TextEditingController();
+  final _offerRideController = TextEditingController();
+  bool showNeedRideError = false;
+  bool showOfferRideError = false;
+
   bool _isFormValid() {
     bool foundError = false;
-    if (_nameController.text.trim().isEmpty ||
-        _nameController.text.trim().length < 3) {
+    String name = _nameController.text.trim();
+    if (name.isEmpty || name.length < 3) {
       setState(() {
         showNameError = true;
       });
@@ -119,7 +121,7 @@ class _FormWidgetState extends State<FormWidget> {
       });
     }
 
-    if (_contactInfoController.text.trim().isEmpty) {
+    if (_emailController.text.trim().isEmpty) {
       setState(() {
         showContactInfoError = true;
       });
@@ -130,69 +132,112 @@ class _FormWidgetState extends State<FormWidget> {
       });
     }
 
-    if (isComing) {
-      String peopleText = _peopleController.text.trim();
-      int? numberOfPeople = int.tryParse(peopleText);
-      bool peopleValid =
-          peopleText.isNotEmpty && numberOfPeople != null && numberOfPeople > 0;
-
-      String whoComingText = _whoComingController.text.trim();
-      bool whoIsComingValid = whoComingText.isNotEmpty;
-
-      bool cakeValid = true;
-      if (isBringingCake) {
-        String cakeText = _cakeFlavorController.text.trim();
-        cakeValid = cakeText.isNotEmpty && cakeText.length > 3;
-      }
-
-      bool mealValid = true;
-      if (widget.authenticationState.authenticationType ==
-          AuthenticationType.attendingFestivities) {
-        mealValid = (_startersOption1Controller.text.trim().isNotEmpty &&
-                int.tryParse(_startersOption1Controller.text.trim()) != null &&
-                int.parse(_startersOption1Controller.text.trim()) >= 0) ||
-            (_startersOption2Controller.text.trim().isNotEmpty &&
-                int.tryParse(_startersOption2Controller.text.trim()) != null &&
-                int.parse(_startersOption2Controller.text.trim()) >= 0) ||
-            (_mainOption1Controller.text.trim().isNotEmpty &&
-                int.tryParse(_mainOption1Controller.text.trim()) != null &&
-                int.parse(_mainOption1Controller.text.trim()) >= 0) ||
-            (_mainOption2Controller.text.trim().isNotEmpty &&
-                int.tryParse(_mainOption2Controller.text.trim()) != null &&
-                int.parse(_mainOption2Controller.text.trim()) >= 0) ||
-            (_mainOption3Controller.text.trim().isNotEmpty &&
-                int.tryParse(_mainOption3Controller.text.trim()) != null &&
-                int.parse(_mainOption3Controller.text.trim()) >= 0) ||
-            (_dessertOption1Controller.text.trim().isNotEmpty &&
-                int.tryParse(_dessertOption1Controller.text.trim()) != null &&
-                int.parse(_dessertOption1Controller.text.trim()) >= 0) ||
-            (_dessertOption2Controller.text.trim().isNotEmpty &&
-                int.tryParse(_dessertOption2Controller.text.trim()) != null &&
-                int.parse(_dessertOption2Controller.text.trim()) >= 0);
-      }
-
-      bool contributionValid = true;
-      if (hasContribution) {
-        String contributionText = _topicController.text.trim();
-        contributionValid =
-            contributionText.isNotEmpty && contributionText.length > 3;
-      }
-
+    if (_phoneController.text.trim().isEmpty) {
       setState(() {
-        showPeopleError = !peopleValid;
-        showWhoComingError = !whoIsComingValid;
-        showMealError = !mealValid;
-        showContributionError = !contributionValid;
-        showCakeError = !cakeValid;
+        showPhoneError = true;
       });
-
-      foundError = foundError ||
-          !peopleValid ||
-          !mealValid ||
-          !cakeValid ||
-          !contributionValid ||
-          !whoIsComingValid;
+      foundError = true;
+    } else {
+      setState(() {
+        showPhoneError = false;
+      });
     }
+
+    if (!isComing) {
+      return !foundError;
+    }
+
+    String peopleText = _peopleController.text.trim();
+    int? numberOfPeople = int.tryParse(peopleText);
+    bool peopleValid = numberOfPeople != null && numberOfPeople > 0;
+
+    String whoComingText = _whoComingController.text.trim();
+    bool whoIsComingValid =
+        whoComingText.isNotEmpty && whoComingText.length > 3;
+
+    foundError = !(peopleValid && whoIsComingValid);
+
+    setState(() {
+      showPeopleError = !peopleValid;
+      showWhoComingError = !whoIsComingValid;
+    });
+
+    if (isBringingCake) {
+      String cakeText = _cakeFlavorController.text.trim();
+      if (cakeText.isNotEmpty && cakeText.length > 3) {
+        setState(() {
+          showCakeError = false;
+        });
+      } else {
+        setState(() {
+          showCakeError = true;
+        });
+        foundError = true;
+      }
+    }
+
+    if (isBringingSnacks) {
+      String snacks = _snacksController.text.trim();
+      if (snacks.isEmpty || snacks.length < 3) {
+        setState(() {
+          showSnacksError = true;
+        });
+        foundError = true;
+      } else {
+        setState(() {
+          showSnacksError = false;
+        });
+      }
+    }
+
+    if (widget.authenticationState.authenticationType !=
+        AuthenticationType.attendingFestivities) {
+      return !foundError;
+    }
+
+    if (hasContribution) {
+      String contributionText = _topicController.text.trim();
+      if (contributionText.isNotEmpty && contributionText.length > 3) {
+        setState(() {
+          showContributionError = false;
+        });
+      } else {
+        setState(() {
+          showContributionError = true;
+        });
+        foundError = true;
+      }
+    }
+
+    if (rideOption == RideOption.searching) {
+      String needRide = _needRideController.text.trim();
+      int? needRideAmount = int.tryParse(needRide);
+
+      if (needRideAmount == null || needRideAmount <= 0) {
+        setState(() {
+          showNeedRideError = true;
+        });
+        foundError = true;
+      } else {
+        setState(() {
+          showNeedRideError = false;
+        });
+      }
+    } else if (rideOption == RideOption.offering) {
+      String offerRide = _offerRideController.text.trim();
+      int? offerRideAmount = int.tryParse(offerRide);
+      if (offerRideAmount == null || offerRideAmount <= 0) {
+        setState(() {
+          showOfferRideError = true;
+        });
+        foundError = true;
+      } else {
+        setState(() {
+          showOfferRideError = false;
+        });
+      }
+    }
+
     return !foundError;
   }
 
@@ -206,20 +251,19 @@ class _FormWidgetState extends State<FormWidget> {
         "isComing": isComing,
         "whoIsComing": _whoComingController.text,
         "numberOfPeople": int.tryParse(_peopleController.text) ?? 0,
-        "contactInformation": _contactInfoController.text,
+        "contactInformation": _emailController.text,
+        "phone": _phoneController.text,
         "doYouHaveContribution": hasContribution,
         "topic": _topicController.text,
         "needProjector": needProjector,
         "needMusic": needMusic,
         "doYouBringCake": isBringingCake,
         "cakeFlavor": _cakeFlavorController.text,
-        "startersOption1": _startersOption1Controller.text,
-        "startersOption2": _startersOption2Controller.text,
-        "mainOption1": _mainOption1Controller.text,
-        "mainOption2": _mainOption2Controller.text,
-        "mainOption3": _mainOption3Controller.text,
-        "dessertOption1": _dessertOption1Controller.text,
-        "dessertOption2": _dessertOption2Controller.text,
+        "doYouBringSnacks": isBringingSnacks,
+        "snacksFlavor": _snacksController.text,
+        "rideOption": rideOption.value,
+        "needRide": int.tryParse(_needRideController.text) ?? 0,
+        "offerRide": int.tryParse(_offerRideController.text) ?? 0,
       };
 
       final username = widget.authenticationState.username;
@@ -294,13 +338,22 @@ class _FormWidgetState extends State<FormWidget> {
                       style: TextStyle(color: Colors.red),
                     ),
                   TextField(
-                    controller: _contactInfoController,
-                    decoration:
-                        const InputDecoration(labelText: contactInfoLabel),
+                    controller: _emailController,
+                    decoration: const InputDecoration(labelText: emailLabel),
                   ),
                   if (showContactInfoError)
                     Text(
                       contactInfoErrorText,
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  // Insert new phone field here
+                  TextField(
+                    controller: _phoneController,
+                    decoration: const InputDecoration(labelText: phoneLabel),
+                  ),
+                  if (showPhoneError)
+                    Text(
+                      phoneErrorText,
                       style: TextStyle(color: Colors.red),
                     ),
                   SizedBox(height: 16),
@@ -425,6 +478,59 @@ class _FormWidgetState extends State<FormWidget> {
                           style: TextStyle(color: Colors.red),
                         ),
                     ],
+                    SizedBox(height: 16),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        doYouBringSnacksText,
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 16),
+                      ),
+                    ),
+                    Column(
+                      children: [
+                        InkWell(
+                          onTap: () => setState(() => isBringingSnacks = false),
+                          child: Row(
+                            children: [
+                              Radio<bool>(
+                                value: false,
+                                groupValue: isBringingSnacks,
+                                onChanged: (val) =>
+                                    setState(() => isBringingSnacks = val!),
+                              ),
+                              const Text(noText),
+                            ],
+                          ),
+                        ),
+                        InkWell(
+                          onTap: () => setState(() => isBringingSnacks = true),
+                          child: Row(
+                            children: [
+                              Radio<bool>(
+                                value: true,
+                                groupValue: isBringingSnacks,
+                                onChanged: (val) =>
+                                    setState(() => isBringingSnacks = val!),
+                              ),
+                              const Text(yesText),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    if (isBringingSnacks) ...[
+                      TextField(
+                        controller: _snacksController,
+                        decoration:
+                            const InputDecoration(labelText: snacksLabel),
+                      ),
+                      if (showSnacksError)
+                        Text(
+                          snacksErrorText,
+                          style: TextStyle(color: Colors.red),
+                        ),
+                    ],
                     if (widget.authenticationState.authenticationType ==
                         AuthenticationType.attendingFestivities) ...[
                       SizedBox(height: 16),
@@ -499,162 +605,90 @@ class _FormWidgetState extends State<FormWidget> {
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
-                          whatDoYouWantToEatText,
+                          'Fahrt zur Feier',
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
                         ),
                       ),
-                      Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(selectZeroText)),
-                      SizedBox(height: 8),
-                      // Starters Section
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Vorspeisen',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ),
-                      Row(
+                      Column(
                         children: [
-                          Expanded(
-                            child: Text(starterOption1Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _startersOption1Controller,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
+                          InkWell(
+                            onTap: () =>
+                                setState(() => rideOption = RideOption.public),
+                            child: Row(
+                              children: [
+                                Radio<RideOption>(
+                                  value: RideOption.public,
+                                  groupValue: rideOption,
+                                  onChanged: (val) =>
+                                      setState(() => rideOption = val!),
+                                ),
+                                const Text('Ich fahre öffentlich'),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(starterOption2Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _startersOption2Controller,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
+                          InkWell(
+                            onTap: () => setState(
+                                () => rideOption = RideOption.searching),
+                            child: Row(
+                              children: [
+                                Radio<RideOption>(
+                                  value: RideOption.searching,
+                                  groupValue: rideOption,
+                                  onChanged: (val) =>
+                                      setState(() => rideOption = val!),
+                                ),
+                                const Text('Ich suche eine Mitfahrgelegenheit'),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      // Main Course Section
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Hauptgerichte',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(mainOption1Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _mainOption1Controller,
+                          if (rideOption == RideOption.searching) ...[
+                            TextField(
+                              controller: _needRideController,
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
+                              decoration: const InputDecoration(
+                                  labelText: 'Wie viele Personen suchen?'),
+                            ),
+                            if (showNeedRideError)
+                              const Text(
+                                'Bitte eine gültige Anzahl angeben.',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          ],
+                          InkWell(
+                            onTap: () => setState(
+                                () => rideOption = RideOption.offering),
+                            child: Row(
+                              children: [
+                                Radio<RideOption>(
+                                  value: RideOption.offering,
+                                  groupValue: rideOption,
+                                  onChanged: (val) =>
+                                      setState(() => rideOption = val!),
+                                ),
+                                const Text('Ich biete eine Mitfahrgelegenheit'),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(mainOption2Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _mainOption2Controller,
+                          if (rideOption == RideOption.offering) ...[
+                            TextField(
+                              controller: _offerRideController,
                               keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
+                              decoration: const InputDecoration(
+                                  labelText:
+                                      'Für wie viele Personen hast du Platz?'),
                             ),
-                          ),
+                            if (showOfferRideError)
+                              const Text(
+                                'Bitte eine gültige Anzahl angeben.',
+                                style: TextStyle(color: Colors.red),
+                              ),
+                          ],
                         ],
                       ),
-                      SizedBox(
-                        height: 5,
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(mainOption3Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _mainOption3Controller,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      // Dessert Section
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Desserts',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(dessertOption1Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _dessertOption1Controller,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text(dessertOption2Text),
-                          ),
-                          SizedBox(width: 16),
-                          Expanded(
-                            child: TextField(
-                              controller: _dessertOption2Controller,
-                              keyboardType: TextInputType.number,
-                              decoration: InputDecoration(labelText: 'Menge'),
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (showMealError)
-                        Text(
-                          'Bitte wählen Sie Ihre Essensoptionen aus. Wenn Sie kein Essen möchten, wählen Sie bitte 0.',
-                          style: TextStyle(color: Colors.red),
-                        ),
                     ]
                   ],
+
                   SizedBox(height: 32),
                   isSubmitting
                       ? CircularProgressIndicator()

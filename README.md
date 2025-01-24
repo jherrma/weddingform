@@ -1,2 +1,17 @@
 # Wedding Form
-The dotenv file has to go into assets/dotenv
+- Name
+- Email
+- Handy
+- Kommt/Kommt nicht
+- Bringt Kuchen
+    - Welchen Kuchen?
+- Bringt Häppchen
+    - Welche Häppchen
+- Hat Beitrag
+    - Welchen Beitrag?
+- Transport
+    - Fahre öffentlich
+    - Suche mitfahrgelegenheit
+        - Wie viel
+    - Biete mitfahrgelegenheit
+        - Wie viel
