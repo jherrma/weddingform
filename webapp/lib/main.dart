@@ -13,12 +13,12 @@ class WeddingFormApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Hochzeit von Katha und Jonathan',
+      title: 'Hochzeit von Sarah und Noah',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
       ),
-      home: const WeddingFormHomePage(title: 'Hochzeit von Katha und Jonathan'),
+      home: const WeddingFormHomePage(title: 'Hochzeit von Sarah und Noah'),
     );
   }
 }
