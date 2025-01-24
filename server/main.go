@@ -167,8 +167,13 @@ func main() {
 			log.Println("Invalid SMTP port")
 			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
 		}
-		mailer := gomail.NewDialer(smtpHost, port, smtpUser, smtpPassword)
-		mailer.SSL = false
+
+		var mailer *gomail.Dialer = nil
+
+		if !debug {
+			mailer := gomail.NewDialer(smtpHost, port, smtpUser, smtpPassword)
+			mailer.SSL = false
+		}
 
 		from := smtpUser
 		toGeneral := []string{os.Getenv(EMAIL_RECIPIENT_GENERAL)}
