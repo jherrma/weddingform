@@ -39,6 +39,7 @@ class _FormWidgetState extends State<FormWidget> {
   final _cakeFlavorController = TextEditingController();
   final _topicController = TextEditingController();
   final _contactInfoController = TextEditingController();
+  final _notesController = TextEditingController();
 
   final TextEditingController _startersOption1Controller =
       TextEditingController();
@@ -69,7 +70,7 @@ class _FormWidgetState extends State<FormWidget> {
 
   // meal
   static const String starterOption1Text = 'Schwäbische Hochzeitssuppe';
-  static const String starterOption2Text = 'Bunter Beilagensalat';
+  static const String starterOption2Text = 'Bunter Beilagensalat (vegan)';
 
   static const String mainOption1Text = 'Rinderschmorbraten';
   static const String mainOption2Text =
@@ -220,6 +221,7 @@ class _FormWidgetState extends State<FormWidget> {
         "mainOption3": _mainOption3Controller.text,
         "dessertOption1": _dessertOption1Controller.text,
         "dessertOption2": _dessertOption2Controller.text,
+        "notes": _notesController.text,
       };
 
       final username = widget.authenticationState.username;
@@ -650,10 +652,17 @@ class _FormWidgetState extends State<FormWidget> {
                       ),
                       if (showMealError)
                         Text(
-                          'Bitte wählen Sie Ihre Essensoptionen aus. Wenn Sie kein Essen möchten, wählen Sie bitte 0.',
+                          'Bitte wähle Deine Essensoptionen aus. Wenn Du kein Essen möchtest, trage bitte eine 0 ein.',
                           style: TextStyle(color: Colors.red),
                         ),
-                    ]
+                    ],
+                    SizedBox(height: 16),
+                    TextField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Möchtest du uns noch etwas mitteilen?',
+                      ),
+                    ),
                   ],
                   SizedBox(height: 32),
                   isSubmitting

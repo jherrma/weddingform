@@ -21,6 +21,7 @@ type FormData struct {
 	WhoIsComing        string `json:"whoIsComing"`
 	NumberOfPeople     int    `json:"numberOfPeople"`
 	ContactInformation string `json:"contactInformation"`
+	Notes              string `json:"notes"`
 
 	// contribution
 	DoYouHaveContribution bool   `json:"doYouHaveContribution"`
@@ -185,6 +186,7 @@ func main() {
 			"\nGebackene Falafel: " + data.MainOption3 +
 			"\nCreme brulee: " + data.DessertOption1 +
 			"\nMousse au Chocolat: " + data.DessertOption2 +
+			"\n\nWas wir noch mitteilen wollen: " + data.Notes +
 			"\n\n\nKontaktinformation: " + data.ContactInformation
 
 		msgGeneral := gomail.NewMessage()
