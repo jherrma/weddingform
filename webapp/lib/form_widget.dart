@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:weddingform/Models/authentication_state.dart';
 import 'package:weddingform/Models/authentication_type.dart';
 import 'dart:convert';
@@ -46,16 +48,27 @@ class _FormWidgetState extends State<FormWidget> {
   final _peopleController = TextEditingController();
   final _cakeFlavorController = TextEditingController();
   final _topicController = TextEditingController();
-  final _emailController = TextEditingController();
+  final _contactInformationController = TextEditingController();
 
   final TextEditingController _whoComingController = TextEditingController();
 
-  // Add a new controller and error state
-  final _phoneController = TextEditingController();
-  bool showPhoneError = false;
+  bool showContactInformationError = false;
+
+  // Add new controller and error state for contribution duration
+  final _contributionDurationController = TextEditingController();
+  bool showContributionDurationError = false;
 
   // Add constants for menu option texts
-  static const String doYouBringCakeText = 'Bringst du einen Kuchen mit?';
+  static const String doYouBringCakeText = 'Ich bringe einen Kuchen mit';
+  static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
+  static const String specifyCakeError =
+      'Bitte gib an, welchen Kuchen du mitbringst.';
+
+  static const String doYouBringSnacksText = 'Ich bringe Häppchen mit';
+  static const String snacksLabel = 'Welche Häppchen bringst du mit?';
+  static const String snacksErrorText =
+      'Bitte gib an, welche Häppchen du mitbringst.';
+
   static const String noText = 'Nein';
   static const String yesText = 'Ja';
   static const String doYouHaveContributionText =
@@ -76,9 +89,7 @@ class _FormWidgetState extends State<FormWidget> {
   static const String imComingText = 'Ich komme';
   static const String numberOfPeopleText = 'Mit wie vielen Personen kommst du?';
   static const String whoIsComingLabel = 'Wer kommt mit?';
-  static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
-  static const String specifyCakeError =
-      'Bitte gib an, welchen Kuchen du mitbringst.';
+
   static const String specifyContributionError =
       'Bitte gib das Thema oder eine Beschreibung deines Beitrags an.';
   static const String nameErrorText = 'Bitte gib deinen Namen an.';
@@ -96,16 +107,32 @@ class _FormWidgetState extends State<FormWidget> {
   final TextEditingController _snacksController = TextEditingController();
   bool showSnacksError = false;
 
-  static const String doYouBringSnacksText = 'Bringst du Häppchen mit?';
-  static const String snacksLabel = 'Welche Häppchen bringst du mit?';
-  static const String snacksErrorText =
-      'Bitte gib an, welche Häppchen du mitbringst.';
-
   RideOption rideOption = RideOption.public;
   final _needRideController = TextEditingController();
   final _offerRideController = TextEditingController();
   bool showNeedRideError = false;
   bool showOfferRideError = false;
+
+  // Add new controllers and state variables
+  final _allergiesController = TextEditingController();
+  bool isVegetarian = false;
+  bool isVegan = false;
+
+  // Add new controller for notes
+  final _notesController = TextEditingController();
+
+  Future<void> _launchMailClient() async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: 'example@example.com',
+    );
+    try {
+      await launchUrlString(emailUri.toString());
+    } catch (e) {
+      print('Error launching mail client: $e');
+      await Clipboard.setData(ClipboardData(text: emailUri.toString()));
+    }
+  }
 
   bool _isFormValid() {
     bool foundError = false;
@@ -121,25 +148,14 @@ class _FormWidgetState extends State<FormWidget> {
       });
     }
 
-    if (_emailController.text.trim().isEmpty) {
+    if (_contactInformationController.text.trim().isEmpty) {
       setState(() {
-        showContactInfoError = true;
+        showContactInformationError = true;
       });
       foundError = true;
     } else {
       setState(() {
-        showContactInfoError = false;
-      });
-    }
-
-    if (_phoneController.text.trim().isEmpty) {
-      setState(() {
-        showPhoneError = true;
-      });
-      foundError = true;
-    } else {
-      setState(() {
-        showPhoneError = false;
+        showContactInformationError = false;
       });
     }
 
@@ -207,6 +223,21 @@ class _FormWidgetState extends State<FormWidget> {
         });
         foundError = true;
       }
+
+      String durationText = _contributionDurationController.text.trim();
+      int? duration = int.tryParse(durationText);
+      bool durationValid = duration != null && duration > 0;
+
+      if (!durationValid) {
+        setState(() {
+          showContributionDurationError = true;
+        });
+        foundError = true;
+      } else {
+        setState(() {
+          showContributionDurationError = false;
+        });
+      }
     }
 
     if (rideOption == RideOption.searching) {
@@ -251,10 +282,11 @@ class _FormWidgetState extends State<FormWidget> {
         "isComing": isComing,
         "whoIsComing": _whoComingController.text,
         "numberOfPeople": int.tryParse(_peopleController.text) ?? 0,
-        "email": _emailController.text,
-        "phone": _phoneController.text,
+        "contactInformation": _contactInformationController.text,
         "doYouHaveContribution": hasContribution,
         "topic": _topicController.text,
+        "contributionDuration":
+            int.tryParse(_contributionDurationController.text) ?? 0,
         "needProjector": needProjector,
         "needMusic": needMusic,
         "doYouBringCake": isBringingCake,
@@ -264,6 +296,10 @@ class _FormWidgetState extends State<FormWidget> {
         "rideOption": rideOption.value,
         "needRide": int.tryParse(_needRideController.text) ?? 0,
         "offerRide": int.tryParse(_offerRideController.text) ?? 0,
+        "allergies": _allergiesController.text,
+        "isVegetarian": isVegetarian,
+        "isVegan": isVegan,
+        "notes": _notesController.text, // Add notes field
       };
 
       final username = widget.authenticationState.username;
@@ -338,22 +374,13 @@ class _FormWidgetState extends State<FormWidget> {
                       style: TextStyle(color: Colors.red),
                     ),
                   TextField(
-                    controller: _emailController,
-                    decoration: const InputDecoration(labelText: emailLabel),
+                    controller: _contactInformationController,
+                    decoration: const InputDecoration(
+                        labelText: 'Kontaktmöglichkeit (Email oder Mobil)'),
                   ),
-                  if (showContactInfoError)
+                  if (showContactInformationError)
                     Text(
-                      contactInfoErrorText,
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  // Insert new phone field here
-                  TextField(
-                    controller: _phoneController,
-                    decoration: const InputDecoration(labelText: phoneLabel),
-                  ),
-                  if (showPhoneError)
-                    Text(
-                      phoneErrorText,
+                      'Bitte gib eine Kontaktmöglichkeit an.',
                       style: TextStyle(color: Colors.red),
                     ),
                   SizedBox(height: 16),
@@ -410,7 +437,6 @@ class _FormWidgetState extends State<FormWidget> {
                         ),
                       ],
                     ),
-                    // Add the new TextField below
                     TextField(
                       controller: _whoComingController,
                       decoration:
@@ -430,42 +456,32 @@ class _FormWidgetState extends State<FormWidget> {
                     Align(
                       alignment: Alignment.centerLeft,
                       child: Text(
-                        doYouBringCakeText,
+                        'Nach der Trauung',
                         style: TextStyle(
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),
-                    Column(
-                      children: [
-                        InkWell(
-                          onTap: () => setState(() => isBringingCake = false),
-                          child: Row(
-                            children: [
-                              Radio<bool>(
-                                value: false,
-                                groupValue: isBringingCake,
-                                onChanged: (val) =>
-                                    setState(() => isBringingCake = val!),
-                              ),
-                              const Text(noText),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => setState(() => isBringingCake = true),
-                          child: Row(
-                            children: [
-                              Radio<bool>(
-                                value: true,
-                                groupValue: isBringingCake,
-                                onChanged: (val) =>
-                                    setState(() => isBringingCake = val!),
-                              ),
-                              const Text(yesText),
-                            ],
-                          ),
-                        ),
-                      ],
+                    // Align(
+                    //   alignment: Alignment.centerLeft,
+                    //   child: InkWell(
+                    //     onTap: _launchMailClient,
+                    //     child: Text(
+                    //       'Bei Fragen bitte an Joanna Hoffert wenden',
+                    //       style: TextStyle(
+                    //         color: Colors.blue,
+                    //         decoration: TextDecoration.underline,
+                    //       ),
+                    //     ),
+                    //   ),
+                    // ),
+                    CheckboxListTile(
+                      title: const Text(doYouBringCakeText),
+                      value: isBringingCake,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          isBringingCake = value!;
+                        });
+                      },
                     ),
                     if (isBringingCake) ...[
                       TextField(
@@ -478,46 +494,15 @@ class _FormWidgetState extends State<FormWidget> {
                           style: TextStyle(color: Colors.red),
                         ),
                     ],
-                    SizedBox(height: 16),
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(
-                        doYouBringSnacksText,
-                        style: TextStyle(
-                            fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ),
-                    Column(
-                      children: [
-                        InkWell(
-                          onTap: () => setState(() => isBringingSnacks = false),
-                          child: Row(
-                            children: [
-                              Radio<bool>(
-                                value: false,
-                                groupValue: isBringingSnacks,
-                                onChanged: (val) =>
-                                    setState(() => isBringingSnacks = val!),
-                              ),
-                              const Text(noText),
-                            ],
-                          ),
-                        ),
-                        InkWell(
-                          onTap: () => setState(() => isBringingSnacks = true),
-                          child: Row(
-                            children: [
-                              Radio<bool>(
-                                value: true,
-                                groupValue: isBringingSnacks,
-                                onChanged: (val) =>
-                                    setState(() => isBringingSnacks = val!),
-                              ),
-                              const Text(yesText),
-                            ],
-                          ),
-                        ),
-                      ],
+                    SizedBox(height: 8),
+                    CheckboxListTile(
+                      title: const Text(doYouBringSnacksText),
+                      value: isBringingSnacks,
+                      onChanged: (bool? value) {
+                        setState(() {
+                          isBringingSnacks = value!;
+                        });
+                      },
                     ),
                     if (isBringingSnacks) ...[
                       TextField(
@@ -586,6 +571,17 @@ class _FormWidgetState extends State<FormWidget> {
                             specifyContributionError,
                             style: TextStyle(color: Colors.red),
                           ),
+                        TextField(
+                          controller: _contributionDurationController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                              labelText: 'Dauer des Beitrags in Minuten'),
+                        ),
+                        if (showContributionDurationError)
+                          Text(
+                            'Bitte gib eine gültige Dauer in Minuten an.',
+                            style: TextStyle(color: Colors.red),
+                          ),
                         CheckboxListTile(
                           title: const Text(needProjectorText),
                           value: needProjector,
@@ -601,6 +597,46 @@ class _FormWidgetState extends State<FormWidget> {
                           },
                         ),
                       ],
+                      SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Abendessen',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: _allergiesController,
+                        decoration: const InputDecoration(
+                            labelText: 'Unverträglichkeiten'),
+                      ),
+                      SizedBox(height: 8),
+                      CheckboxListTile(
+                        title: const Text('Ich bin vegetarisch'),
+                        value: isVegetarian,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isVegetarian = value!;
+                            if (!isVegetarian && isVegan) {
+                              isVegan = false;
+                            }
+                          });
+                        },
+                      ),
+                      CheckboxListTile(
+                        title: const Text('Ich bin vegan'),
+                        value: isVegan,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isVegan = value!;
+                            if (isVegan) {
+                              isVegetarian = true;
+                            }
+                          });
+                        },
+                      ),
                       SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -623,7 +659,7 @@ class _FormWidgetState extends State<FormWidget> {
                                   onChanged: (val) =>
                                       setState(() => rideOption = val!),
                                 ),
-                                const Text('Ich fahre öffentlich'),
+                                const Text('Ich fahre öffentlich/alleine'),
                               ],
                             ),
                           ),
@@ -686,9 +722,15 @@ class _FormWidgetState extends State<FormWidget> {
                           ],
                         ],
                       ),
-                    ]
+                    ],
+                    SizedBox(height: 16),
+                    TextField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Möchtest du uns noch etwas mitteilen?',
+                      ),
+                    ),
                   ],
-
                   SizedBox(height: 32),
                   isSubmitting
                       ? CircularProgressIndicator()

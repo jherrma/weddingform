@@ -16,24 +16,26 @@ import (
 
 type FormData struct {
 	// general
-	Name           string `json:"name"`
-	IsComing       bool   `json:"isComing"`
-	WhoIsComing    string `json:"whoIsComing"`
-	NumberOfPeople int    `json:"numberOfPeople"`
-	Email          string `json:"email"`
-	Phone          string `json:"phone"`
+	Name               string `json:"name"`
+	IsComing           bool   `json:"isComing"`
+	WhoIsComing        string `json:"whoIsComing"`
+	NumberOfPeople     int    `json:"numberOfPeople"`
+	ContactInformation string `json:"contactInformation"`
+	Allergies          string `json:"allergies"`
+	IsVegetarian       bool   `json:"isVegetarian"`
+	IsVegan            bool   `json:"isVegan"`
+	Notes              string `json:"notes"`
 
 	// contribution
 	DoYouHaveContribution bool   `json:"doYouHaveContribution"`
 	Topic                 string `json:"topic"`
 	NeedProjector         bool   `json:"needProjector"`
 	NeedMusic             bool   `json:"needMusic"`
+	ContributionDuration  int    `json:"contributionDuration"`
 
-	// cake
-	DoYouBringCake bool   `json:"doYouBringCake"`
-	CakeFlavor     string `json:"cakeFlavor"`
-
-	// snacks
+	// cake and snacks
+	DoYouBringCake   bool   `json:"doYouBringCake"`
+	CakeFlavor       string `json:"cakeFlavor"`
 	DoYouBringSnacks bool   `json:"doYouBringSnacks"`
 	SnacksFlavor     string `json:"snacksFlavor"`
 
@@ -182,8 +184,11 @@ func main() {
 			"\nKommt: " + resolveBool(data.IsComing) +
 			"\n\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
 			"\nWer kommt: " + data.WhoIsComing +
-			"\n\nEmail: " + data.Email +
-			"\nMobilnummer: " + data.Phone
+			"\n\nAllergien: " + data.Allergies +
+			"\nVegetarisch: " + resolveBool(data.IsVegetarian) +
+			"\nVegan: " + resolveBool(data.IsVegan) +
+			"\nDer Gast möchte noch etwas mitteilen: " + data.Notes +
+			"\n\nKontaktinformation: " + data.ContactInformation
 
 		msgGeneral := gomail.NewMessage()
 		msgGeneral.SetHeader("From", from)
@@ -208,8 +213,7 @@ func main() {
 				"\nKuchen: " + data.CakeFlavor +
 				"\n\nBringst du Snacks mit: " + resolveBool(data.DoYouBringSnacks) +
 				"\nSnacks: " + data.SnacksFlavor +
-				"\n\n\nEmail: " + data.Email +
-				"\nMobilnummer: " + data.Phone
+				"\n\n\nKontaktinformation: " + data.ContactInformation
 
 			msgCoffee := gomail.NewMessage()
 			msgCoffee.SetHeader("From", from)
@@ -235,8 +239,8 @@ func main() {
 				"\nThema: " + data.Topic +
 				"\nBenötigst du einen Projektor: " + resolveBool(data.NeedProjector) +
 				"\nBenötigst du Musik: " + resolveBool(data.NeedMusic) +
-				"\n\n\nEmail: " + data.Email +
-				"\nMobilnummer: " + data.Phone
+				"\nDauer: " + strconv.Itoa(data.ContributionDuration) + " Minuten" +
+				"\n\n\nKontaktinformation: " + data.ContactInformation
 
 			msgFestivities := gomail.NewMessage()
 			msgFestivities.SetHeader("From", from)
@@ -253,29 +257,28 @@ func main() {
 			}
 		}
 
-		toRide := []string{os.Getenv(EMAIL_RIDE)}
-		subjectRide := "Mitfahrgelegenheit - " + resolveRides(data.RideOption)
-		bodyRide := "Name: " + data.Name +
-			"\nEmail: " + data.Email +
-			"\nMobilnummer: " + data.Phone +
-			"\nOption: " + resolveRides(data.RideOption) +
-			"\n" + resolveSeats(data.RideOption, data.NeedRide) +
-			"\n\nEmail: " + data.Email +
-			"\nMobilnummer: " + data.Phone
+		if data.RideOption != 0 {
+			toRide := []string{os.Getenv(EMAIL_RIDE)}
+			subjectRide := "Mitfahrgelegenheit - " + resolveRides(data.RideOption)
+			bodyRide := resolveIsComing(data.IsComing) + " von: " + data.Name +
+				"\nOption: " + resolveRides(data.RideOption) +
+				"\n" + resolveSeats(data.RideOption, data.NeedRide) +
+				"\n\nKontaktinformation: " + data.ContactInformation
 
-		msgRide := gomail.NewMessage()
-		msgRide.SetHeader("From", from)
-		msgRide.SetHeader("To", toRide[0])
-		msgRide.SetHeader("Subject", subjectRide)
-		msgRide.SetBody("text/plain", bodyRide)
+			msgRide := gomail.NewMessage()
+			msgRide.SetHeader("From", from)
+			msgRide.SetHeader("To", toRide[0])
+			msgRide.SetHeader("Subject", subjectRide)
+			msgRide.SetBody("text/plain", bodyRide)
 
-		if !debug {
-			if err := mailer.DialAndSend(msgRide); err != nil {
-				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending ride email"})
+			if !debug {
+				if err := mailer.DialAndSend(msgRide); err != nil {
+					log.Println(err)
+					return c.Status(500).JSON(fiber.Map{"error": "Error sending ride email"})
+				}
+			} else {
+				log.Println("Ride email: " + bodyRide)
 			}
-		} else {
-			log.Println("Ride email: " + bodyRide)
 		}
 
 		return c.JSON(fiber.Map{"message": "Emails sent successfully"})
