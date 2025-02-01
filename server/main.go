@@ -19,7 +19,6 @@ type FormData struct {
 	Name               string `json:"name"`
 	IsComing           bool   `json:"isComing"`
 	WhoIsComing        string `json:"whoIsComing"`
-	NumberOfPeople     int    `json:"numberOfPeople"`
 	ContactInformation string `json:"contactInformation"`
 	Allergies          string `json:"allergies"`
 	IsVegetarian       bool   `json:"isVegetarian"`
@@ -182,7 +181,6 @@ func main() {
 		subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
 		bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
 			"\nKommt: " + resolveBool(data.IsComing) +
-			"\n\nAnzahl der Personen: " + strconv.Itoa(data.NumberOfPeople) +
 			"\nWer kommt: " + data.WhoIsComing +
 			"\n\nAllergien: " + data.Allergies +
 			"\nVegetarisch: " + resolveBool(data.IsVegetarian) +

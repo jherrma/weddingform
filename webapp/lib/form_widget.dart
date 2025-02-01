@@ -33,8 +33,6 @@ class _FormWidgetState extends State<FormWidget> {
   bool needMusic = false;
   bool isBringingCake = false;
   bool showNameError = false;
-  bool showPeopleError = false;
-  bool showCakeError = false;
   bool showContributionError = false;
   bool showWhoComingError = false;
   bool showContactInfoError = false;
@@ -45,7 +43,6 @@ class _FormWidgetState extends State<FormWidget> {
   bool isSubmitting = false;
 
   final _nameController = TextEditingController();
-  final _peopleController = TextEditingController();
   final _cakeFlavorController = TextEditingController();
   final _topicController = TextEditingController();
   final _contactInformationController = TextEditingController();
@@ -59,15 +56,13 @@ class _FormWidgetState extends State<FormWidget> {
   bool showContributionDurationError = false;
 
   // Add constants for menu option texts
-  static const String doYouBringCakeText = 'Ich bringe einen Kuchen mit';
+  static const String doYouBringCakeText =
+      'Ich bringe einen Kuchen mit (freiwillig)';
   static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
-  static const String specifyCakeError =
-      'Bitte gib an, welchen Kuchen du mitbringst.';
 
-  static const String doYouBringSnacksText = 'Ich bringe Häppchen mit';
+  static const String doYouBringSnacksText =
+      'Ich bringe Häppchen mit (freiwillig)';
   static const String snacksLabel = 'Welche Häppchen bringst du mit?';
-  static const String snacksErrorText =
-      'Bitte gib an, welche Häppchen du mitbringst.';
 
   static const String noText = 'Nein';
   static const String yesText = 'Ja';
@@ -84,28 +79,19 @@ class _FormWidgetState extends State<FormWidget> {
       'Deine Angaben werden ausschließlich zum Organisieren unserer Hochzeit verwendet und gespeichert. Ausgewählte Personen, die uns beim Organisieren helfen, erhalten eine Kopie der Angaben. Deine Daten werden nicht an Dritte weitergegeben. Deine Angaben werden per Mail versendet.';
   static const String submitButtonText = 'Absenden';
   static const String nameLabel = 'Wie lautet dein Name?';
-  static const String emailLabel = 'Wie lautet deine E-Mail-Adresse?';
   static const String imNotComingText = 'Ich komme nicht';
   static const String imComingText = 'Ich komme';
-  static const String numberOfPeopleText = 'Mit wie vielen Personen kommst du?';
-  static const String whoIsComingLabel = 'Wer kommt mit?';
+  static const String whoIsComingLabel = 'Wer kommt mit inkl. dir?';
 
   static const String specifyContributionError =
       'Bitte gib das Thema oder eine Beschreibung deines Beitrags an.';
   static const String nameErrorText = 'Bitte gib deinen Namen an.';
-  static const String contactInfoErrorText =
-      'Bitte gib eine Kontaktmöglichkeit an.';
   static const String whoComingErrorText = 'Bitte gib an, wer mitkommt.';
-  static const String peopleErrorText = 'Bitte gib an, zu wievielt ihr kommt.';
   static const String submissionErrorText =
       'Fehler beim Absenden des Formulars. Bitte versuche es erneut.';
 
-  static const String phoneLabel = 'Wie lautet deine Mobilnummer?';
-  static const String phoneErrorText = 'Bitte gib deine Mobilnummer an.';
-
   bool isBringingSnacks = false;
   final TextEditingController _snacksController = TextEditingController();
-  bool showSnacksError = false;
 
   RideOption rideOption = RideOption.public;
   final _needRideController = TextEditingController();
@@ -163,48 +149,15 @@ class _FormWidgetState extends State<FormWidget> {
       return !foundError;
     }
 
-    String peopleText = _peopleController.text.trim();
-    int? numberOfPeople = int.tryParse(peopleText);
-    bool peopleValid = numberOfPeople != null && numberOfPeople > 0;
-
     String whoComingText = _whoComingController.text.trim();
     bool whoIsComingValid =
         whoComingText.isNotEmpty && whoComingText.length > 3;
 
-    foundError = !(peopleValid && whoIsComingValid);
+    foundError = !(whoIsComingValid);
 
     setState(() {
-      showPeopleError = !peopleValid;
       showWhoComingError = !whoIsComingValid;
     });
-
-    if (isBringingCake) {
-      String cakeText = _cakeFlavorController.text.trim();
-      if (cakeText.isNotEmpty && cakeText.length > 3) {
-        setState(() {
-          showCakeError = false;
-        });
-      } else {
-        setState(() {
-          showCakeError = true;
-        });
-        foundError = true;
-      }
-    }
-
-    if (isBringingSnacks) {
-      String snacks = _snacksController.text.trim();
-      if (snacks.isEmpty || snacks.length < 3) {
-        setState(() {
-          showSnacksError = true;
-        });
-        foundError = true;
-      } else {
-        setState(() {
-          showSnacksError = false;
-        });
-      }
-    }
 
     if (widget.authenticationState.authenticationType !=
         AuthenticationType.attendingFestivities) {
@@ -226,7 +179,8 @@ class _FormWidgetState extends State<FormWidget> {
 
       String durationText = _contributionDurationController.text.trim();
       int? duration = int.tryParse(durationText);
-      bool durationValid = duration != null && duration > 0;
+      bool durationValid = durationText.isEmpty ||
+          durationText.isNotEmpty && duration != null && duration > 0;
 
       if (!durationValid) {
         setState(() {
@@ -281,7 +235,6 @@ class _FormWidgetState extends State<FormWidget> {
         "name": _nameController.text,
         "isComing": isComing,
         "whoIsComing": _whoComingController.text,
-        "numberOfPeople": int.tryParse(_peopleController.text) ?? 0,
         "contactInformation": _contactInformationController.text,
         "doYouHaveContribution": hasContribution,
         "topic": _topicController.text,
@@ -418,25 +371,6 @@ class _FormWidgetState extends State<FormWidget> {
                   ),
                   SizedBox(height: 16),
                   if (isComing) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            numberOfPeopleText,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: TextField(
-                            controller: _peopleController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(),
-                          ),
-                        ),
-                      ],
-                    ),
                     TextField(
                       controller: _whoComingController,
                       decoration:
@@ -445,11 +379,6 @@ class _FormWidgetState extends State<FormWidget> {
                     if (showWhoComingError)
                       Text(
                         whoComingErrorText,
-                        style: TextStyle(color: Colors.red),
-                      ),
-                    if (showPeopleError)
-                      Text(
-                        peopleErrorText,
                         style: TextStyle(color: Colors.red),
                       ),
                     SizedBox(height: 16),
@@ -488,11 +417,6 @@ class _FormWidgetState extends State<FormWidget> {
                         controller: _cakeFlavorController,
                         decoration: const InputDecoration(labelText: cakeLabel),
                       ),
-                      if (showCakeError)
-                        Text(
-                          specifyCakeError,
-                          style: TextStyle(color: Colors.red),
-                        ),
                     ],
                     SizedBox(height: 8),
                     CheckboxListTile(
@@ -510,133 +434,9 @@ class _FormWidgetState extends State<FormWidget> {
                         decoration:
                             const InputDecoration(labelText: snacksLabel),
                       ),
-                      if (showSnacksError)
-                        Text(
-                          snacksErrorText,
-                          style: TextStyle(color: Colors.red),
-                        ),
                     ],
                     if (widget.authenticationState.authenticationType ==
                         AuthenticationType.attendingFestivities) ...[
-                      SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          doYouHaveContributionText,
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                      Column(
-                        children: [
-                          InkWell(
-                            onTap: () =>
-                                setState(() => hasContribution = false),
-                            child: Row(
-                              children: [
-                                Radio<bool>(
-                                  value: false,
-                                  groupValue: hasContribution,
-                                  onChanged: (val) =>
-                                      setState(() => hasContribution = val!),
-                                ),
-                                const Text(noText),
-                              ],
-                            ),
-                          ),
-                          InkWell(
-                            onTap: () => setState(() => hasContribution = true),
-                            child: Row(
-                              children: [
-                                Radio<bool>(
-                                  value: true,
-                                  groupValue: hasContribution,
-                                  onChanged: (val) =>
-                                      setState(() => hasContribution = val!),
-                                ),
-                                const Text(yesText),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (hasContribution) ...[
-                        TextField(
-                          controller: _topicController,
-                          decoration:
-                              const InputDecoration(labelText: topicLabel),
-                        ),
-                        if (showContributionError)
-                          Text(
-                            specifyContributionError,
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        TextField(
-                          controller: _contributionDurationController,
-                          keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                              labelText: 'Dauer des Beitrags in Minuten'),
-                        ),
-                        if (showContributionDurationError)
-                          Text(
-                            'Bitte gib eine gültige Dauer in Minuten an.',
-                            style: TextStyle(color: Colors.red),
-                          ),
-                        CheckboxListTile(
-                          title: const Text(needProjectorText),
-                          value: needProjector,
-                          onChanged: (val) {
-                            setState(() => needProjector = val!);
-                          },
-                        ),
-                        CheckboxListTile(
-                          title: const Text(needMusicText),
-                          value: needMusic,
-                          onChanged: (val) {
-                            setState(() => needMusic = val!);
-                          },
-                        ),
-                      ],
-                      SizedBox(height: 16),
-                      Align(
-                        alignment: Alignment.centerLeft,
-                        child: Text(
-                          'Abendessen',
-                          style: TextStyle(
-                              fontWeight: FontWeight.bold, fontSize: 16),
-                        ),
-                      ),
-                      SizedBox(height: 8),
-                      TextField(
-                        controller: _allergiesController,
-                        decoration: const InputDecoration(
-                            labelText: 'Unverträglichkeiten'),
-                      ),
-                      SizedBox(height: 8),
-                      CheckboxListTile(
-                        title: const Text('Ich bin vegetarisch'),
-                        value: isVegetarian,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isVegetarian = value!;
-                            if (!isVegetarian && isVegan) {
-                              isVegan = false;
-                            }
-                          });
-                        },
-                      ),
-                      CheckboxListTile(
-                        title: const Text('Ich bin vegan'),
-                        value: isVegan,
-                        onChanged: (bool? value) {
-                          setState(() {
-                            isVegan = value!;
-                            if (isVegan) {
-                              isVegetarian = true;
-                            }
-                          });
-                        },
-                      ),
                       SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerLeft,
@@ -722,6 +522,126 @@ class _FormWidgetState extends State<FormWidget> {
                           ],
                         ],
                       ),
+                      SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          'Abendessen',
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      SizedBox(height: 8),
+                      TextField(
+                        controller: _allergiesController,
+                        decoration: const InputDecoration(
+                            labelText: 'Unverträglichkeiten'),
+                      ),
+                      SizedBox(height: 8),
+                      CheckboxListTile(
+                        title: const Text('Ich bin vegetarisch'),
+                        value: isVegetarian,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isVegetarian = value!;
+                            if (!isVegetarian && isVegan) {
+                              isVegan = false;
+                            }
+                          });
+                        },
+                      ),
+                      CheckboxListTile(
+                        title: const Text('Ich bin vegan'),
+                        value: isVegan,
+                        onChanged: (bool? value) {
+                          setState(() {
+                            isVegan = value!;
+                            if (isVegan) {
+                              isVegetarian = true;
+                            }
+                          });
+                        },
+                      ),
+                      SizedBox(height: 16),
+                      SizedBox(height: 16),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          doYouHaveContributionText,
+                          style: TextStyle(
+                              fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Column(
+                        children: [
+                          InkWell(
+                            onTap: () =>
+                                setState(() => hasContribution = false),
+                            child: Row(
+                              children: [
+                                Radio<bool>(
+                                  value: false,
+                                  groupValue: hasContribution,
+                                  onChanged: (val) =>
+                                      setState(() => hasContribution = val!),
+                                ),
+                                const Text(noText),
+                              ],
+                            ),
+                          ),
+                          InkWell(
+                            onTap: () => setState(() => hasContribution = true),
+                            child: Row(
+                              children: [
+                                Radio<bool>(
+                                  value: true,
+                                  groupValue: hasContribution,
+                                  onChanged: (val) =>
+                                      setState(() => hasContribution = val!),
+                                ),
+                                const Text(yesText),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (hasContribution) ...[
+                        TextField(
+                          controller: _topicController,
+                          decoration:
+                              const InputDecoration(labelText: topicLabel),
+                        ),
+                        if (showContributionError)
+                          Text(
+                            specifyContributionError,
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        TextField(
+                          controller: _contributionDurationController,
+                          keyboardType: TextInputType.number,
+                          decoration: const InputDecoration(
+                              labelText: 'Dauer des Beitrags in Minuten'),
+                        ),
+                        if (showContributionDurationError)
+                          Text(
+                            'Bitte gib eine gültige Dauer in Minuten an.',
+                            style: TextStyle(color: Colors.red),
+                          ),
+                        CheckboxListTile(
+                          title: const Text(needProjectorText),
+                          value: needProjector,
+                          onChanged: (val) {
+                            setState(() => needProjector = val!);
+                          },
+                        ),
+                        CheckboxListTile(
+                          title: const Text(needMusicText),
+                          value: needMusic,
+                          onChanged: (val) {
+                            setState(() => needMusic = val!);
+                          },
+                        ),
+                      ],
                     ],
                     SizedBox(height: 16),
                     TextField(
