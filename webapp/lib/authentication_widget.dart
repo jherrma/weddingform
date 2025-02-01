@@ -31,14 +31,20 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
         final data = json.decode(response.body);
         if (data['type'] == 0) {
           widget.onAuthenticationChanged(AuthenticationState(
-              authenticationType: AuthenticationType.attendingCoffee,
-              username: data['username'],
-              password: data['password']));
+            authenticationType: AuthenticationType.attendingCoffee,
+            username: data['username'],
+            password: data['password'],
+            emailCoffee: data['emailCoffee'],
+            emailContribution: data['emailContribution'],
+          ));
         } else if (data['type'] == 1) {
           widget.onAuthenticationChanged(AuthenticationState(
-              authenticationType: AuthenticationType.attendingFestivities,
-              username: data['username'],
-              password: data['password']));
+            authenticationType: AuthenticationType.attendingFestivities,
+            username: data['username'],
+            password: data['password'],
+            emailCoffee: data['emailCoffee'],
+            emailContribution: data['emailContribution'],
+          ));
         }
         setState(() {
           showError = false;

@@ -77,6 +77,10 @@ func main() {
 	smtpUser := os.Getenv(SMTP_USER)
 	smtpPassword := os.Getenv(SMTP_PASSWORD)
 
+	emailGeneral := os.Getenv(EMAIL_RECIPIENT_GENERAL)
+	emailCoffee := os.Getenv(EMAIL_RECIPIENT_COFFEE)
+	emailFestivities := os.Getenv(EMAIL_RECIPIENT_FESTIVITIES)
+
 	debugString := os.Getenv("DEBUG")
 	debug, err := strconv.ParseBool(debugString)
 	if err != nil {
@@ -115,15 +119,19 @@ func main() {
 
 		if data.Password == secretCoffee {
 			return c.JSON(fiber.Map{
-				"type":     0,
-				"username": usernameCoffee,
-				"password": secretCoffee,
+				"type":              0,
+				"username":          usernameCoffee,
+				"password":          secretCoffee,
+				"emailCoffee":       emailCoffee,
+				"emailContribution": emailFestivities,
 			})
 		} else if data.Password == secretFestivities {
 			return c.JSON(fiber.Map{
-				"type":     1,
-				"username": usernameFestivities,
-				"password": secretFestivities,
+				"type":              1,
+				"username":          usernameFestivities,
+				"password":          secretFestivities,
+				"emailCoffee":       emailCoffee,
+				"emailContribution": emailFestivities,
 			})
 		} else {
 			return c.Status(401).JSON(fiber.Map{
@@ -172,7 +180,7 @@ func main() {
 		}
 
 		from := smtpUser
-		toGeneral := []string{os.Getenv(EMAIL_RECIPIENT_GENERAL)}
+		toGeneral := []string{emailGeneral}
 		subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
 		bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
 			"\nKommt: " + resolveBool(data.IsComing) +
@@ -206,7 +214,7 @@ func main() {
 		}
 
 		if data.IsComing && data.DoYouBringCake {
-			toCoffee := []string{os.Getenv(EMAIL_RECIPIENT_COFFEE)}
+			toCoffee := []string{emailCoffee}
 			subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
 			bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +
@@ -234,7 +242,7 @@ func main() {
 		}
 
 		if data.IsComing && data.DoYouHaveContribution {
-			toFestivities := []string{os.Getenv(EMAIL_RECIPIENT_FESTIVITIES)}
+			toFestivities := []string{emailFestivities}
 			subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag"
 			bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher_string.dart';
 import 'package:weddingform/Models/authentication_state.dart';
 import 'package:weddingform/Models/authentication_type.dart';
 import 'dart:convert';
@@ -103,6 +105,19 @@ class _FormWidgetState extends State<FormWidget> {
   static const String peopleErrorText = 'Bitte gib an, zu wievielt ihr kommt.';
   static const String submissionErrorText =
       'Fehler beim Absenden des Formulars. Bitte versuche es erneut.';
+
+  Future<void> _launchMailClient(String email) async {
+    final Uri emailUri = Uri(
+      scheme: 'mailto',
+      path: email,
+    );
+    try {
+      await launchUrlString(emailUri.toString());
+    } catch (e) {
+      print('Error launching mail client: $e');
+      await Clipboard.setData(ClipboardData(text: emailUri.toString()));
+    }
+  }
 
   bool _isFormValid() {
     bool foundError = false;
@@ -355,6 +370,30 @@ class _FormWidgetState extends State<FormWidget> {
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Text(
+                            'Bei Fragen bitte an Lea Burret wenden.',
+                          ),
+                          SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => _launchMailClient(
+                                widget.authenticationState.emailCoffee),
+                            child: Text(
+                              'Email',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.open_in_new, size: 16),
+                        ],
+                      ),
+                    ),
                     Column(
                       children: [
                         InkWell(
@@ -407,6 +446,30 @@ class _FormWidgetState extends State<FormWidget> {
                           doYouHaveContributionText,
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Bei Fragen bitte an Michael Simbürger wenden.',
+                            ),
+                            SizedBox(width: 8),
+                            InkWell(
+                              onTap: () => _launchMailClient(
+                                  widget.authenticationState.emailContribution),
+                              child: Text(
+                                'Email',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.open_in_new, size: 16),
+                          ],
                         ),
                       ),
                       Column(
