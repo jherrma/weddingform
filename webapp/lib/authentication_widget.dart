@@ -20,8 +20,6 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
   bool showError = false;
   bool showDefaultPasswordError = false;
 
-  static const String secretDefaultValue = 'default';
-
   void _validatePassword() async {
     String password = _passwordController.text.trim();
     try {
@@ -33,12 +31,18 @@ class AuthenticationWidgetState extends State<AuthenticationWidget> {
           widget.onAuthenticationChanged(AuthenticationState(
               authenticationType: AuthenticationType.attendingCoffee,
               username: data['username'],
-              password: data['password']));
+              password: data['password'],
+              emailCoffee: data['emailCoffee'],
+              emailRide: data['emailRide'],
+              emailContribution: data['emailContribution']));
         } else if (data['type'] == 1) {
           widget.onAuthenticationChanged(AuthenticationState(
               authenticationType: AuthenticationType.attendingFestivities,
               username: data['username'],
-              password: data['password']));
+              password: data['password'],
+              emailCoffee: data['emailCoffee'],
+              emailRide: data['emailRide'],
+              emailContribution: data['emailContribution']));
         }
         setState(() {
           showError = false;

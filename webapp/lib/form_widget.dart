@@ -107,10 +107,10 @@ class _FormWidgetState extends State<FormWidget> {
   // Add new controller for notes
   final _notesController = TextEditingController();
 
-  Future<void> _launchMailClient() async {
+  Future<void> _launchMailClient(String email) async {
     final Uri emailUri = Uri(
       scheme: 'mailto',
-      path: 'example@example.com',
+      path: email,
     );
     try {
       await launchUrlString(emailUri.toString());
@@ -390,19 +390,30 @@ class _FormWidgetState extends State<FormWidget> {
                             fontWeight: FontWeight.bold, fontSize: 16),
                       ),
                     ),
-                    // Align(
-                    //   alignment: Alignment.centerLeft,
-                    //   child: InkWell(
-                    //     onTap: _launchMailClient,
-                    //     child: Text(
-                    //       'Bei Fragen bitte an Joanna Hoffert wenden',
-                    //       style: TextStyle(
-                    //         color: Colors.blue,
-                    //         decoration: TextDecoration.underline,
-                    //       ),
-                    //     ),
-                    //   ),
-                    // ),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Row(
+                        children: [
+                          Text(
+                            'Bei Fragen bitte an Joanna Hoffert wenden.',
+                          ),
+                          SizedBox(width: 8),
+                          InkWell(
+                            onTap: () => _launchMailClient(
+                                widget.authenticationState.emailRide),
+                            child: Text(
+                              'Email',
+                              style: TextStyle(
+                                color: Colors.blue,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 4),
+                          Icon(Icons.open_in_new, size: 16),
+                        ],
+                      ),
+                    ),
                     CheckboxListTile(
                       title: const Text(doYouBringCakeText),
                       value: isBringingCake,
@@ -444,6 +455,30 @@ class _FormWidgetState extends State<FormWidget> {
                           'Fahrt zur Feier',
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Bei Fragen bitte an Martin Schwarz wenden.',
+                            ),
+                            SizedBox(width: 8),
+                            InkWell(
+                              onTap: () => _launchMailClient(
+                                  widget.authenticationState.emailRide),
+                              child: Text(
+                                'Email',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.open_in_new, size: 16),
+                          ],
                         ),
                       ),
                       Column(
@@ -563,13 +598,36 @@ class _FormWidgetState extends State<FormWidget> {
                         },
                       ),
                       SizedBox(height: 16),
-                      SizedBox(height: 16),
                       Align(
                         alignment: Alignment.centerLeft,
                         child: Text(
                           doYouHaveContributionText,
                           style: TextStyle(
                               fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Row(
+                          children: [
+                            Text(
+                              'Bei Fragen bitte an Mate Hoffert wenden.',
+                            ),
+                            SizedBox(width: 8),
+                            InkWell(
+                              onTap: () => _launchMailClient(
+                                  widget.authenticationState.emailContribution),
+                              child: Text(
+                                'Email',
+                                style: TextStyle(
+                                  color: Colors.blue,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                            SizedBox(width: 4),
+                            Icon(Icons.open_in_new, size: 16),
+                          ],
                         ),
                       ),
                       Column(

@@ -52,7 +52,7 @@ const (
 	EMAIL_RECIPIENT_GENERAL     = "EMAIL_RECIPIENT_GENERAL"
 	EMAIL_RECIPIENT_COFFEE      = "EMAIL_RECIPIENT_COFFEE"
 	EMAIL_RECIPIENT_FESTIVITIES = "EMAIL_RECIPIENT_FESTIVITIES"
-	EMAIL_RIDE                  = "EMAIL_RIDE"
+	EMAIL_RECIPIENT_RIDE        = "EMAIL_RECIPIENT_RIDE"
 	USER_COFFEE                 = "USER_COFFEE"
 	USER_FESTIVITIES            = "USER_FESTIVITIES"
 	SECRET_COFFEE               = "SECRET_COFFEE"
@@ -80,6 +80,11 @@ func main() {
 
 	userCoffee := os.Getenv(USER_COFFEE)
 	userFestivities := os.Getenv(USER_FESTIVITIES)
+
+	emailRecipientGeneral := os.Getenv(EMAIL_RECIPIENT_GENERAL)
+	emailRecipientCoffee := os.Getenv(EMAIL_RECIPIENT_COFFEE)
+	emailRecipientFestivities := os.Getenv(EMAIL_RECIPIENT_FESTIVITIES)
+	emailRecipientRide := os.Getenv(EMAIL_RECIPIENT_RIDE)
 
 	debugString := os.Getenv(DEBUG)
 	debug, err := strconv.ParseBool(debugString)
@@ -119,15 +124,21 @@ func main() {
 
 		if data.Password == secretCoffee {
 			return c.JSON(fiber.Map{
-				"type":     0,
-				"username": userCoffee,
-				"password": secretCoffee,
+				"type":              0,
+				"username":          userCoffee,
+				"password":          secretCoffee,
+				"emailCoffee":       emailRecipientCoffee,
+				"emailRide":         emailRecipientRide,
+				"emailContribution": emailRecipientFestivities,
 			})
 		} else if data.Password == secretFestivities {
 			return c.JSON(fiber.Map{
-				"type":     1,
-				"username": userFestivities,
-				"password": secretFestivities,
+				"type":              1,
+				"username":          userFestivities,
+				"password":          secretFestivities,
+				"emailCoffee":       emailRecipientCoffee,
+				"emailRide":         emailRecipientRide,
+				"emailContribution": emailRecipientFestivities,
 			})
 		} else {
 			return c.Status(401).JSON(fiber.Map{
@@ -177,7 +188,7 @@ func main() {
 		}
 
 		from := smtpUser
-		toGeneral := []string{os.Getenv(EMAIL_RECIPIENT_GENERAL)}
+		toGeneral := []string{emailRecipientGeneral}
 		subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
 		bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
 			"\nKommt: " + resolveBool(data.IsComing) +
@@ -203,7 +214,7 @@ func main() {
 		}
 
 		if data.IsComing && (data.DoYouBringCake || data.DoYouBringSnacks) {
-			toCoffee := []string{os.Getenv(EMAIL_RECIPIENT_COFFEE)}
+			toCoffee := []string{emailRecipientCoffee}
 			subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
 			bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +
@@ -229,7 +240,7 @@ func main() {
 		}
 
 		if data.IsComing && data.DoYouHaveContribution {
-			toFestivities := []string{os.Getenv(EMAIL_RECIPIENT_FESTIVITIES)}
+			toFestivities := []string{emailRecipientFestivities}
 			subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag"
 			bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nKommt: " + resolveBool(data.IsComing) +
@@ -256,7 +267,7 @@ func main() {
 		}
 
 		if data.RideOption != 0 {
-			toRide := []string{os.Getenv(EMAIL_RIDE)}
+			toRide := []string{emailRecipientRide}
 			subjectRide := "Mitfahrgelegenheit - " + resolveRides(data.RideOption)
 			bodyRide := resolveIsComing(data.IsComing) + " von: " + data.Name +
 				"\nOption: " + resolveRides(data.RideOption) +
