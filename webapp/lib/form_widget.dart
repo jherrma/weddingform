@@ -35,7 +35,6 @@ class _FormWidgetState extends State<FormWidget> {
   bool isSubmitting = false;
 
   final _nameController = TextEditingController();
-  final _peopleController = TextEditingController();
   final _cakeFlavorController = TextEditingController();
   final _topicController = TextEditingController();
   final _contactInfoController = TextEditingController();
@@ -91,8 +90,7 @@ class _FormWidgetState extends State<FormWidget> {
       'Kontaktmöglichkeit (vorzugsweise E-Mail)';
   static const String imNotComingText = 'Ich komme nicht';
   static const String imComingText = 'Ich komme';
-  static const String numberOfPeopleText = 'Mit wie vielen Personen kommst du?';
-  static const String whoIsComingLabel = 'Wer kommt mit?';
+  static const String whoIsComingLabel = 'Wer kommt mit inkl dir?';
   static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
   static const String specifyCakeError =
       'Bitte gib an, welchen Kuchen du mitbringst.';
@@ -132,11 +130,6 @@ class _FormWidgetState extends State<FormWidget> {
     }
 
     if (isComing) {
-      String peopleText = _peopleController.text.trim();
-      int? numberOfPeople = int.tryParse(peopleText);
-      bool peopleValid =
-          peopleText.isNotEmpty && numberOfPeople != null && numberOfPeople > 0;
-
       String whoComingText = _whoComingController.text.trim();
       bool whoIsComingValid = whoComingText.isNotEmpty;
 
@@ -180,7 +173,6 @@ class _FormWidgetState extends State<FormWidget> {
       }
 
       setState(() {
-        showPeopleError = !peopleValid;
         showWhoComingError = !whoIsComingValid;
         showMealError = !mealValid;
         showContributionError = !contributionValid;
@@ -188,7 +180,6 @@ class _FormWidgetState extends State<FormWidget> {
       });
 
       foundError = foundError ||
-          !peopleValid ||
           !mealValid ||
           !cakeValid ||
           !contributionValid ||
@@ -206,7 +197,6 @@ class _FormWidgetState extends State<FormWidget> {
         "name": _nameController.text,
         "isComing": isComing,
         "whoIsComing": _whoComingController.text,
-        "numberOfPeople": int.tryParse(_peopleController.text) ?? 0,
         "contactInformation": _contactInfoController.text,
         "doYouHaveContribution": hasContribution,
         "topic": _topicController.text,
@@ -340,25 +330,6 @@ class _FormWidgetState extends State<FormWidget> {
                   ),
                   SizedBox(height: 16),
                   if (isComing) ...[
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            numberOfPeopleText,
-                            style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 16),
-                          ),
-                        ),
-                        SizedBox(width: 16),
-                        Expanded(
-                          child: TextField(
-                            controller: _peopleController,
-                            keyboardType: TextInputType.number,
-                            decoration: InputDecoration(),
-                          ),
-                        ),
-                      ],
-                    ),
                     // Add the new TextField below
                     TextField(
                       controller: _whoComingController,
