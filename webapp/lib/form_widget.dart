@@ -310,12 +310,10 @@ class _FormWidgetState extends State<FormWidget> {
                           TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                     ),
                   ),
-                  // Update data privacy notice to regular font weight
                   Text(
                     dataPrivacyNotice,
                     style: TextStyle(fontWeight: FontWeight.normal),
                   ),
-                  // Insert a divider
                   Divider(),
                   TextField(
                     controller: _nameController,
@@ -400,7 +398,7 @@ class _FormWidgetState extends State<FormWidget> {
                           SizedBox(width: 8),
                           InkWell(
                             onTap: () => _launchMailClient(
-                                widget.authenticationState.emailRide),
+                                widget.authenticationState.emailCoffee),
                             child: Text(
                               'Email',
                               style: TextStyle(
