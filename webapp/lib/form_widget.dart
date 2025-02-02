@@ -92,7 +92,8 @@ class _FormWidgetState extends State<FormWidget> {
       'Kontaktmöglichkeit (vorzugsweise E-Mail)';
   static const String imNotComingText = 'Ich komme nicht';
   static const String imComingText = 'Ich komme';
-  static const String whoIsComingLabel = 'Wer kommt mit inkl dir?';
+  static const String whoIsComingLabel =
+      'Welche geladenen Gäste meldest du inkl. dir mit an?';
   static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
   static const String specifyCakeError =
       'Bitte gib an, welchen Kuchen du mitbringst.';
