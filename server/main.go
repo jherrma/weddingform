@@ -25,7 +25,7 @@ func main() {
 
 	app.Post("/validate-password", limiter, apiService.ValidatePassword)
 
-	app.Post("/send-email", limiter, services.GetBasicAuth(configContainer))
+	app.Post("/send-email", limiter, services.GetBasicAuth(configContainer), apiService.GetFormData)
 
 	log.Fatal(app.Listen(":3000"))
 }
