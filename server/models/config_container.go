@@ -17,4 +17,8 @@ type ConfigContainer struct {
 	SmtpPassword string
 
 	Debug bool
+
+	MongoUri   string
+	Database   string
+	Collection string
 }
