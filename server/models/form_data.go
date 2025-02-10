@@ -19,11 +19,11 @@ type FormData struct {
 	CakeFlavor     string `json:"cakeFlavor"`
 
 	// meal
-	StartersOption1 string `json:"startersOption1"`
-	StartersOption2 string `json:"startersOption2"`
-	MainOption1     string `json:"mainOption1"`
-	MainOption2     string `json:"mainOption2"`
-	MainOption3     string `json:"mainOption3"`
-	DessertOption1  string `json:"dessertOption1"`
-	DessertOption2  string `json:"dessertOption2"`
+	HochzeitSuppe   int `json:"startersOption1"`
+	Salat           int `json:"startersOption2"`
+	Rinderbraten    int `json:"mainOption1"`
+	Huhn            int `json:"mainOption2"`
+	Falafel         int `json:"mainOption3"`
+	CremeBrule      int `json:"dessertOption1"`
+	MousseAuChcolat int `json:"dessertOption2"`
 }

@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"weddingform/server/models"
@@ -78,13 +79,13 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 	bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
 		"\nKommt: " + resolveBool(data.IsComing) +
 		"\nWer kommt: " + data.WhoIsComing +
-		"\n\nGerichte:\nSchwäbische Hochzeitssuppe: " + data.StartersOption1 +
-		"\nBunter Beilagensalat: " + data.StartersOption2 +
-		"\nRinderschmorbraten: " + data.MainOption1 +
-		"\nHähnchenbrust auf Kräuterkruste: " + data.MainOption2 +
-		"\nGebackene Falafel: " + data.MainOption3 +
-		"\nCreme brulee: " + data.DessertOption1 +
-		"\nMousse au Chocolat: " + data.DessertOption2 +
+		"\n\nGerichte:\nSchwäbische Hochzeitssuppe: " + fmt.Sprint(data.HochzeitSuppe) +
+		"\nBunter Beilagensalat: " + fmt.Sprint(data.Salat) +
+		"\nRinderschmorbraten: " + fmt.Sprint(data.Rinderbraten) +
+		"\nHähnchenbrust auf Kräuterkruste: " + fmt.Sprint(data.Huhn) +
+		"\nGebackene Falafel: " + fmt.Sprint(data.Falafel) +
+		"\nCreme brulee: " + fmt.Sprint(data.CremeBrule) +
+		"\nMousse au Chocolat: " + fmt.Sprint(data.MousseAuChcolat) +
 		"\n\nWas wir noch mitteilen wollen: " + data.Notes +
 		"\n\n\nKontaktinformation: " + data.ContactInformation
 
