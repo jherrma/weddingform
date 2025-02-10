@@ -21,6 +21,9 @@ const (
 	SMTP_PORT                   = "SMTP_PORT"
 	SMTP_USER                   = "SMTP_USER"
 	SMTP_PASSWORD               = "SMTP_PASSWORD"
+	MONGO_URI                   = "MONGODB_URI"
+	MONGO_DATBASE               = "MONGODB_DATABASE"
+	MONGO_COLLECTION            = "MONGODB_COLLECTION"
 )
 
 func GetConfigFromEnvs() *models.ConfigContainer {
@@ -52,5 +55,8 @@ func GetConfigFromEnvs() *models.ConfigContainer {
 		EmailRecipientCoffee:        os.Getenv(EMAIL_RECIPIENT_COFFEE),
 		EmailRecipientContributions: os.Getenv(EMAIL_RECIPIENT_FESTIVITIES),
 		Debug:                       debug,
+		MongoUri:                    os.Getenv(MONGO_URI),
+		Database:                    os.Getenv(MONGO_DATBASE),
+		Collection:                  os.Getenv(MONGO_COLLECTION),
 	}
 }

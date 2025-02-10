@@ -9,14 +9,16 @@ import (
 	"gopkg.in/gomail.v2"
 )
 
-func NewApiService(configContainer *models.ConfigContainer) *ApiSerice {
+func NewApiService(configContainer *models.ConfigContainer, mongo *MongoDb) *ApiSerice {
 	return &ApiSerice{
 		configContainer: configContainer,
+		mongo:           mongo,
 	}
 }
 
 type ApiSerice struct {
 	configContainer *models.ConfigContainer
+	mongo           *MongoDb
 }
 
 func (a *ApiSerice) ValidatePassword(c *fiber.Ctx) error {
@@ -52,6 +54,10 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 	var data models.FormData
 	if err := c.BodyParser(&data); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
+	}
+
+	if err := a.mongo.InsertNewForm(&data); err != nil {
+		log.Printf("Error inserting new form data %s", err.Error())
 	}
 
 	var mailer *gomail.Dialer = nil
