@@ -71,7 +71,7 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
 		}
 
-		mailer := gomail.NewDialer(a.configContainer.SmtpHost, port, a.configContainer.SmtpUser, a.configContainer.SmtpPassword)
+		mailer = gomail.NewDialer(a.configContainer.SmtpHost, port, a.configContainer.SmtpUser, a.configContainer.SmtpPassword)
 		mailer.SSL = false
 	}
 
