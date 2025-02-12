@@ -93,7 +93,7 @@ class _FormWidgetState extends State<FormWidget> {
   static const String imNotComingText = 'Ich komme nicht';
   static const String imComingText = 'Ich komme';
   static const String whoIsComingLabel =
-      'Welche geladenen Gäste meldest du inkl. dir mit an?';
+      'Welche geladenen Gäste meldest du mit an?';
   static const String cakeLabel = 'Welchen Kuchen bringst du mit?';
   static const String specifyCakeError =
       'Bitte gib an, welchen Kuchen du mitbringst.';
@@ -146,9 +146,6 @@ class _FormWidgetState extends State<FormWidget> {
     }
 
     if (isComing) {
-      String whoComingText = _whoComingController.text.trim();
-      bool whoIsComingValid = whoComingText.isNotEmpty;
-
       bool cakeValid = true;
       if (isBringingCake) {
         String cakeText = _cakeFlavorController.text.trim();
@@ -189,17 +186,12 @@ class _FormWidgetState extends State<FormWidget> {
       }
 
       setState(() {
-        showWhoComingError = !whoIsComingValid;
         showMealError = !mealValid;
         showContributionError = !contributionValid;
         showCakeError = !cakeValid;
       });
 
-      foundError = foundError ||
-          !mealValid ||
-          !cakeValid ||
-          !contributionValid ||
-          !whoIsComingValid;
+      foundError = foundError || !mealValid || !cakeValid || !contributionValid;
     }
     return !foundError;
   }

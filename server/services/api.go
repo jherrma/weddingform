@@ -57,113 +57,19 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 	}
 
-	if err := a.mongo.InsertNewForm(&data); err != nil {
-		log.Printf("Error inserting new form data %s", err.Error())
+	//if err := a.mongo.InsertNewForm(data); err != nil {
+	//	log.Printf("Error inserting new form data %s", err.Error())
+	//}
+
+	mailer, err := GetMailer(a.configContainer)
+	if err != nil {
+		log.Println(err)
+		return c.Status(500).JSON(fiber.Map{"error": "Error sending email"})
 	}
 
-	var mailer *gomail.Dialer = nil
-
-	if !a.configContainer.Debug {
-		port, err := strconv.Atoi(a.configContainer.SmtpPort)
-		if err != nil {
-			log.Println("Invalid SMTP port")
-			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
-		}
-		mailer = gomail.NewDialer(a.configContainer.SmtpHost, port, a.configContainer.SmtpUser, a.configContainer.SmtpPassword)
-		mailer.SSL = false
-	}
-
-	from := a.configContainer.SmtpUser
-	toGeneral := []string{a.configContainer.EmailRecipientGeneral}
-	subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
-	bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
-		"\nKommt: " + resolveBool(data.IsComing) +
-		"\nWer kommt: " + data.WhoIsComing +
-		"\n\nGerichte:\nSchwäbische Hochzeitssuppe: " + fmt.Sprint(data.HochzeitSuppe) +
-		"\nBunter Beilagensalat: " + fmt.Sprint(data.Salat) +
-		"\nRinderschmorbraten: " + fmt.Sprint(data.Rinderbraten) +
-		"\nHähnchenbrust auf Kräuterkruste: " + fmt.Sprint(data.Huhn) +
-		"\nGebackene Falafel: " + fmt.Sprint(data.Falafel) +
-		"\nCreme brulee: " + fmt.Sprint(data.CremeBrule) +
-		"\nMousse au Chocolat: " + fmt.Sprint(data.MousseAuChcolat) +
-		"\n\nWas wir noch mitteilen wollen: " + data.Notes +
-		"\n\n\nKontaktinformation: " + data.ContactInformation
-
-	msgGeneral := gomail.NewMessage()
-	msgGeneral.SetHeader("From", from)
-	msgGeneral.SetHeader("To", toGeneral[0])
-	msgGeneral.SetHeader("Subject", subjectGeneral)
-	msgGeneral.SetBody("text/plain", bodyGeneral)
-	if !a.configContainer.Debug {
-		if err := mailer.DialAndSend(msgGeneral); err != nil {
-			log.Println(err.Error())
-			return c.Status(500).JSON(fiber.Map{"error": "Error sending general and meal email"})
-		}
-	} else {
-		log.Println("General and meal email:")
-		log.Println("From: " + from)
-		log.Println("To: " + toGeneral[0])
-		log.Println("Subject: " + subjectGeneral)
-		log.Println("Body: " + bodyGeneral)
-	}
-
-	if data.IsComing && data.DoYouBringCake {
-		toCoffee := []string{a.configContainer.EmailRecipientCoffee}
-		subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
-		bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name +
-			"\nKommt: " + resolveBool(data.IsComing) +
-			"\n\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
-			"\nKuchen: " + data.CakeFlavor +
-			"\n\n\nKontaktinformation: " + data.ContactInformation
-
-		msgCoffee := gomail.NewMessage()
-		msgCoffee.SetHeader("From", from)
-		msgCoffee.SetHeader("To", toCoffee[0])
-		msgCoffee.SetHeader("Subject", subjectCoffee)
-		msgCoffee.SetBody("text/plain", bodyCoffee)
-		if !a.configContainer.Debug {
-			if err := mailer.DialAndSend(msgCoffee); err != nil {
-				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending cake email"})
-			}
-		} else {
-			log.Println("Cake email:")
-			log.Println("From: " + from)
-			log.Println("To: " + toCoffee[0])
-			log.Println("Subject: " + subjectCoffee)
-			log.Println("Body: " + bodyCoffee)
-		}
-	}
-
-	if data.IsComing && data.DoYouHaveContribution {
-		toContributions := []string{a.configContainer.EmailRecipientContributions}
-		subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag"
-		bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name +
-			"\nKommt: " + resolveBool(data.IsComing) +
-			"\n\nHast du einen Beitrag: " + resolveBool(data.DoYouHaveContribution) +
-			"\nThema: " + data.Topic +
-			"\nBenötigst du einen Projektor: " + resolveBool(data.NeedProjector) +
-			"\nBenötigst du Musik: " + resolveBool(data.NeedMusic) +
-			"\n\n\nKontaktinformation: " + data.ContactInformation
-
-		msgFestivities := gomail.NewMessage()
-		msgFestivities.SetHeader("From", from)
-		msgFestivities.SetHeader("To", toContributions[0])
-		msgFestivities.SetHeader("Subject", subjectFestivities)
-		msgFestivities.SetBody("text/plain", bodyFestivities)
-		if !a.configContainer.Debug {
-			if err := mailer.DialAndSend(msgFestivities); err != nil {
-				log.Println(err)
-				return c.Status(500).JSON(fiber.Map{"error": "Error sending contribution email"})
-			}
-		} else {
-			log.Println("Contribution email:")
-			log.Println("From: " + from)
-			log.Println("To: " + toContributions[0])
-			log.Println("Subject: " + subjectFestivities)
-			log.Println("Body: " + bodyFestivities)
-		}
-	}
+	sendMessageGeneral(a.configContainer, mailer, &data)
+	sendMessageCoffe(a.configContainer, mailer, &data)
+	sendMessageContributions(a.configContainer, mailer, &data)
 
 	return c.JSON(fiber.Map{"message": "Emails sent successfully"})
 
@@ -182,4 +88,163 @@ func resolveIsComing(value bool) string {
 		return "Zusage"
 	}
 	return "Absage"
+}
+
+func GetMailer(config *models.ConfigContainer) (*gomail.Dialer, error) {
+	if config.Debug {
+		return nil, nil
+	}
+
+	port, err := strconv.Atoi(config.SmtpPort)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SMTP port")
+	}
+
+	mailer := gomail.NewDialer(config.SmtpHost, port, config.SmtpUser, config.SmtpPassword)
+	mailer.SSL = false
+
+	return mailer, nil
+}
+
+func getMessageGeneral(config *models.ConfigContainer, data *models.FormData) *gomail.Message {
+	from := config.SmtpUser
+	toGeneral := []string{config.EmailRecipientGeneral}
+	subjectGeneral := resolveIsComing(data.IsComing) + " - Hochzeit - Allgemein und Mahlzeiten"
+	bodyGeneral := resolveIsComing(data.IsComing) + " von: " + data.Name +
+		"\nKommt: " + resolveBool(data.IsComing) +
+		"\nWer kommt noch: " + data.WhoIsComing +
+		"\n\nGerichte:\nSchwäbische Hochzeitssuppe: " + fmt.Sprint(data.HochzeitSuppe) +
+		"\nBunter Beilagensalat: " + fmt.Sprint(data.Salat) +
+		"\nRinderschmorbraten: " + fmt.Sprint(data.Rinderbraten) +
+		"\nHähnchenbrust auf Kräuterkruste: " + fmt.Sprint(data.Huhn) +
+		"\nGebackene Falafel: " + fmt.Sprint(data.Falafel) +
+		"\nCreme brulee: " + fmt.Sprint(data.CremeBrule) +
+		"\nMousse au Chocolat: " + fmt.Sprint(data.MousseAuChcolat) +
+		"\n\nWas wir noch mitteilen wollen: " + data.Notes +
+		"\n\n\nKontaktinformation: " + data.ContactInformation
+
+	msgGeneral := gomail.NewMessage()
+	msgGeneral.SetHeader("From", from)
+	msgGeneral.SetHeader("To", toGeneral[0])
+	msgGeneral.SetHeader("Subject", subjectGeneral)
+	msgGeneral.SetBody("text/plain", bodyGeneral)
+
+	if config.Debug {
+		log.Println("General and meal email:")
+		log.Println("From: " + from)
+		log.Println("To: " + toGeneral[0])
+		log.Println("Subject: " + subjectGeneral)
+		log.Println("Body: " + bodyGeneral)
+	}
+
+	return msgGeneral
+}
+
+func sendMessageGeneral(config *models.ConfigContainer, mailer *gomail.Dialer, data *models.FormData) error {
+	msgGeneral := getMessageGeneral(config, data)
+
+	if config.Debug {
+		return nil
+	}
+
+	if err := mailer.DialAndSend(msgGeneral); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func getMessageCoffee(config *models.ConfigContainer, data *models.FormData) *gomail.Message {
+	from := config.SmtpUser
+	toCoffee := []string{config.EmailRecipientCoffee}
+	subjectCoffee := resolveIsComing(data.IsComing) + " - Hochzeit - Kuchen"
+	bodyCoffee := resolveIsComing(data.IsComing) + " von: " + data.Name +
+		"\nKommt: " + resolveBool(data.IsComing) +
+		"\n\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
+		"\nKuchen: " + data.CakeFlavor +
+		"\n\n\nKontaktinformation: " + data.ContactInformation
+
+	msgCoffee := gomail.NewMessage()
+	msgCoffee.SetHeader("From", from)
+	msgCoffee.SetHeader("To", toCoffee[0])
+	msgCoffee.SetHeader("Subject", subjectCoffee)
+	msgCoffee.SetBody("text/plain", bodyCoffee)
+
+	if config.Debug {
+		log.Println("Cake email:")
+		log.Println("From: " + from)
+		log.Println("To: " + toCoffee[0])
+		log.Println("Subject: " + subjectCoffee)
+		log.Println("Body: " + bodyCoffee)
+	}
+
+	return msgCoffee
+}
+
+func sendMessageCoffe(config *models.ConfigContainer, mailer *gomail.Dialer, data *models.FormData) error {
+	if !data.IsComing || !data.DoYouBringCake {
+		return nil
+	}
+
+	msgCoffee := getMessageCoffee(config, data)
+
+	if config.Debug {
+		return nil
+	}
+
+	if err := mailer.DialAndSend(msgCoffee); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
+}
+
+func getMessageContributions(config *models.ConfigContainer, data *models.FormData) *gomail.Message {
+	from := config.SmtpUser
+	toContributions := []string{config.EmailRecipientContributions}
+	subjectFestivities := resolveIsComing(data.IsComing) + " - Hochzeit - Beitrag"
+	bodyFestivities := resolveIsComing(data.IsComing) + " von: " + data.Name +
+		"\nKommt: " + resolveBool(data.IsComing) +
+		"\n\nHast du einen Beitrag: " + resolveBool(data.DoYouHaveContribution) +
+		"\nThema: " + data.Topic +
+		"\nBenötigst du einen Projektor: " + resolveBool(data.NeedProjector) +
+		"\nBenötigst du Musik: " + resolveBool(data.NeedMusic) +
+		"\n\n\nKontaktinformation: " + data.ContactInformation
+
+	msgFestivities := gomail.NewMessage()
+	msgFestivities.SetHeader("From", from)
+	msgFestivities.SetHeader("To", toContributions[0])
+	msgFestivities.SetHeader("Subject", subjectFestivities)
+	msgFestivities.SetBody("text/plain", bodyFestivities)
+
+	if config.Debug {
+		log.Println("Contribution email:")
+		log.Println("From: " + from)
+		log.Println("To: " + toContributions[0])
+		log.Println("Subject: " + subjectFestivities)
+		log.Println("Body: " + bodyFestivities)
+	}
+
+	return msgFestivities
+}
+
+func sendMessageContributions(config *models.ConfigContainer, mailer *gomail.Dialer, data *models.FormData) error {
+	if !data.IsComing || !data.DoYouHaveContribution {
+		return nil
+	}
+
+	msgFestivities := getMessageContributions(config, data)
+
+	if config.Debug {
+		return nil
+	}
+
+	if err := mailer.DialAndSend(msgFestivities); err != nil {
+		log.Println(err)
+		return err
+	}
+
+	return nil
 }
