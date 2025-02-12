@@ -1,6 +1,7 @@
 package services
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 	"weddingform/server/models"
@@ -62,17 +63,10 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 		log.Printf("Error inserting new form data %s", err.Error())
 	}
 
-	var mailer *gomail.Dialer = nil
-
-	if !a.configContainer.Debug {
-		port, err := strconv.Atoi(a.configContainer.SmtpPort)
-		if err != nil {
-			log.Println("Invalid SMTP port")
-			return c.Status(500).JSON(fiber.Map{"error": "Invalid SMTP port"})
-		}
-
-		mailer = gomail.NewDialer(a.configContainer.SmtpHost, port, a.configContainer.SmtpUser, a.configContainer.SmtpPassword)
-		mailer.SSL = false
+	mailer, err := GetMailer(a.configContainer)
+	if err != nil {
+		log.Println(err)
+		return c.Status(500).JSON(fiber.Map{"error": "Error sending email"})
 	}
 
 	from := a.configContainer.SmtpUser
@@ -108,8 +102,8 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 			"\nKommt: " + resolveBool(data.IsComing) +
 			"\n\nBringst du Kuchen mit: " + resolveBool(data.DoYouBringCake) +
 			"\nKuchen: " + data.CakeFlavor +
-			"\n\nBringst du Snacks mit: " + resolveBool(data.DoYouBringSnacks) +
-			"\nSnacks: " + data.SnacksFlavor +
+			"\n\nBringst du Häppchen mit: " + resolveBool(data.DoYouBringSnacks) +
+			"\nHäppchen: " + data.SnacksFlavor +
 			"\n\n\nKontaktinformation: " + data.ContactInformation
 
 		msgCoffee := gomail.NewMessage()
@@ -159,7 +153,7 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 		subjectRide := "Mitfahrgelegenheit - " + resolveRides(data.RideOption)
 		bodyRide := resolveIsComing(data.IsComing) + " von: " + data.Name +
 			"\nOption: " + resolveRides(data.RideOption) +
-			"\n" + resolveSeats(data.RideOption, data.NeedRide) +
+			"\n" + resolveSeats(data.RideOption, data.NeedRide, data.OfferRide) +
 			"\n\nKontaktinformation: " + data.ContactInformation
 
 		msgRide := gomail.NewMessage()
@@ -207,12 +201,28 @@ func resolveRides(value int) string {
 	}
 }
 
-func resolveSeats(rideOption int, seats int) string {
+func resolveSeats(rideOption int, need int, offer int) string {
 	if rideOption == 0 {
 		return ""
 	} else if rideOption == 1 {
-		return "Plätze benötigt: " + strconv.Itoa(seats)
+		return "Plätze benötigt: " + strconv.Itoa(need)
 	} else {
-		return "Plätze angeboten: " + strconv.Itoa(seats)
+		return "Plätze angeboten: " + strconv.Itoa(offer)
 	}
+}
+
+func GetMailer(config *models.ConfigContainer) (*gomail.Dialer, error) {
+	if config.Debug {
+		return nil, nil
+	}
+
+	port, err := strconv.Atoi(config.SmtpPort)
+	if err != nil {
+		return nil, fmt.Errorf("invalid SMTP port")
+	}
+
+	mailer := gomail.NewDialer(config.SmtpHost, port, config.SmtpUser, config.SmtpPassword)
+	mailer.SSL = false
+
+	return mailer, nil
 }

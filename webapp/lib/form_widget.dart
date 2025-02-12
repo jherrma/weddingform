@@ -82,7 +82,7 @@ class _FormWidgetState extends State<FormWidget> {
   static const String imNotComingText = 'Ich komme nicht';
   static const String imComingText = 'Ich komme';
   static const String whoIsComingLabel =
-      'Welche geladenen Gäste meldest du inkl. dir mit an?';
+      'Welche geladenen Gäste meldest du mit an?';
 
   static const String specifyContributionError =
       'Bitte gib das Thema oder eine Beschreibung deines Beitrags an.';
