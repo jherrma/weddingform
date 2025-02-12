@@ -150,16 +150,6 @@ class _FormWidgetState extends State<FormWidget> {
       return !foundError;
     }
 
-    String whoComingText = _whoComingController.text.trim();
-    bool whoIsComingValid =
-        whoComingText.isNotEmpty && whoComingText.length > 3;
-
-    foundError = !(whoIsComingValid);
-
-    setState(() {
-      showWhoComingError = !whoIsComingValid;
-    });
-
     if (widget.authenticationState.authenticationType !=
         AuthenticationType.attendingFestivities) {
       return !foundError;
