@@ -57,9 +57,9 @@ func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
 		return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 	}
 
-	//if err := a.mongo.InsertNewForm(data); err != nil {
-	//	log.Printf("Error inserting new form data %s", err.Error())
-	//}
+	if err := a.mongo.InsertNewForm(&data); err != nil {
+		log.Printf("Error inserting new form data %s", err.Error())
+	}
 
 	mailer, err := GetMailer(a.configContainer)
 	if err != nil {

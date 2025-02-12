@@ -23,7 +23,7 @@ func (m *MongoDb) Close() {
 
 func (m *MongoDb) InsertNewForm(formData *models.FormData) error {
 	collection := m.client.Database(m.config.Database).Collection(m.config.Collection)
-	_, err := collection.InsertOne(context.Background(), formData)
+	_, err := collection.InsertOne(context.Background(), *formData)
 	if err != nil {
 		log.Println(err)
 		return err
