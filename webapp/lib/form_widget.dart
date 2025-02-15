@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher_string.dart';
@@ -32,6 +33,14 @@ class _FormWidgetState extends State<FormWidget> {
   bool showContactInfoError = false;
   bool showSubmissionError = false;
   bool formSentSuccessfully = false;
+
+  int? startersOption1;
+  int? startersOption2;
+  int? mainOption1;
+  int? mainOption2;
+  int? mainOption3;
+  int? dessertOption1;
+  int? dessertOption2;
 
   // Add submission state variable
   bool isSubmitting = false;
@@ -115,7 +124,9 @@ class _FormWidgetState extends State<FormWidget> {
     try {
       await launchUrlString(emailUri.toString());
     } catch (e) {
-      print('Error launching mail client: $e');
+      if (kDebugMode) {
+        print('Error launching mail client: $e');
+      }
       await Clipboard.setData(ClipboardData(text: emailUri.toString()));
     }
   }
@@ -155,27 +166,29 @@ class _FormWidgetState extends State<FormWidget> {
       bool mealValid = true;
       if (widget.authenticationState.authenticationType ==
           AuthenticationType.attendingFestivities) {
-        mealValid = (_startersOption1Controller.text.trim().isNotEmpty &&
-                int.tryParse(_startersOption1Controller.text.trim()) != null &&
-                int.parse(_startersOption1Controller.text.trim()) >= 0) ||
-            (_startersOption2Controller.text.trim().isNotEmpty &&
-                int.tryParse(_startersOption2Controller.text.trim()) != null &&
-                int.parse(_startersOption2Controller.text.trim()) >= 0) ||
-            (_mainOption1Controller.text.trim().isNotEmpty &&
-                int.tryParse(_mainOption1Controller.text.trim()) != null &&
-                int.parse(_mainOption1Controller.text.trim()) >= 0) ||
-            (_mainOption2Controller.text.trim().isNotEmpty &&
-                int.tryParse(_mainOption2Controller.text.trim()) != null &&
-                int.parse(_mainOption2Controller.text.trim()) >= 0) ||
-            (_mainOption3Controller.text.trim().isNotEmpty &&
-                int.tryParse(_mainOption3Controller.text.trim()) != null &&
-                int.parse(_mainOption3Controller.text.trim()) >= 0) ||
-            (_dessertOption1Controller.text.trim().isNotEmpty &&
-                int.tryParse(_dessertOption1Controller.text.trim()) != null &&
-                int.parse(_dessertOption1Controller.text.trim()) >= 0) ||
-            (_dessertOption2Controller.text.trim().isNotEmpty &&
-                int.tryParse(_dessertOption2Controller.text.trim()) != null &&
-                int.parse(_dessertOption2Controller.text.trim()) >= 0);
+        String startersOption1Text = _startersOption1Controller.text.trim();
+        String startersOption2Text = _startersOption2Controller.text.trim();
+        String mainOption1Text = _mainOption1Controller.text.trim();
+        String mainOption2Text = _mainOption2Controller.text.trim();
+        String mainOption3Text = _mainOption3Controller.text.trim();
+        String dessertOption1Text = _dessertOption1Controller.text.trim();
+        String dessertOption2Text = _dessertOption2Controller.text.trim();
+
+        startersOption1 = int.tryParse(startersOption1Text);
+        startersOption2 = int.tryParse(startersOption2Text);
+        mainOption1 = int.tryParse(mainOption1Text);
+        mainOption2 = int.tryParse(mainOption2Text);
+        mainOption3 = int.tryParse(mainOption3Text);
+        dessertOption1 = int.tryParse(dessertOption1Text);
+        dessertOption2 = int.tryParse(dessertOption2Text);
+
+        mealValid = startersOption1 != null &&
+            startersOption2 != null &&
+            mainOption1 != null &&
+            mainOption2 != null &&
+            mainOption3 != null &&
+            dessertOption1 != null &&
+            dessertOption2 != null;
       }
 
       bool contributionValid = true;
