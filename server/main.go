@@ -1,30 +1,16 @@
 package main
 
 import (
-	"context"
 	"log"
+	"weddingform/server/mongo"
 	"weddingform/server/services"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/cors"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
 func main() {
-	ctx := context.Background()
-
-	configContainer := services.GetConfigFromEnvs()
-
-	client, err := mongo.Connect(ctx, options.Client().ApplyURI(configContainer.MongoUri))
-	if err != nil {
-		panic(err)
-	}
-
-	mongoDb := services.NewMongoDb(client, configContainer)
-	defer mongoDb.Close()
-
-	apiService := services.NewApiService(configContainer, mongoDb)
+	defer mongo.Close()
 
 	app := fiber.New()
 
@@ -37,9 +23,9 @@ func main() {
 
 	app.Static("/", "./webapp")
 
-	app.Post("/validate-password", limiter, apiService.ValidatePassword)
+	app.Post("/validate-password", limiter, services.ValidatePassword)
 
-	app.Post("/send-email", limiter, services.GetBasicAuth(configContainer), apiService.GetFormData)
+	app.Post("/send-email", limiter, services.GetBasicAuth(), services.GetFormData)
 
 	log.Fatal(app.Listen(":3000"))
 }

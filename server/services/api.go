@@ -4,45 +4,43 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"weddingform/server/config"
 	"weddingform/server/models"
+	"weddingform/server/mongo"
 
 	"github.com/gofiber/fiber/v2"
 	"gopkg.in/gomail.v2"
 )
 
-func NewApiService(configContainer *models.ConfigContainer, mongo *MongoDb) *ApiSerice {
-	return &ApiSerice{
-		configContainer: configContainer,
-		mongo:           mongo,
-	}
+var (
+	configuration *models.ConfigContainer
+)
+
+func init() {
+	configuration = config.GetConfig()
 }
 
-type ApiSerice struct {
-	configContainer *models.ConfigContainer
-	mongo           *MongoDb
-}
-
-func (a *ApiSerice) ValidatePassword(c *fiber.Ctx) error {
+func ValidatePassword(c *fiber.Ctx) error {
 	var data models.PasswordData
 	if err := c.BodyParser(&data); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 	}
 
-	if data.Password == a.configContainer.SecretCoffee {
+	if data.Password == configuration.SecretCoffee {
 		return c.JSON(fiber.Map{
 			"type":              0,
-			"username":          a.configContainer.UsernameCoffee,
-			"password":          a.configContainer.SecretCoffee,
-			"emailCoffee":       a.configContainer.EmailRecipientCoffee,
-			"emailContribution": a.configContainer.EmailRecipientContributions,
+			"username":          configuration.UsernameCoffee,
+			"password":          configuration.SecretCoffee,
+			"emailCoffee":       configuration.EmailRecipientCoffee,
+			"emailContribution": configuration.EmailRecipientContributions,
 		})
-	} else if data.Password == a.configContainer.SecretFestivities {
+	} else if data.Password == configuration.SecretFestivities {
 		return c.JSON(fiber.Map{
 			"type":              1,
-			"username":          a.configContainer.UsernameFestivities,
-			"password":          a.configContainer.SecretFestivities,
-			"emailCoffee":       a.configContainer.EmailRecipientCoffee,
-			"emailContribution": a.configContainer.EmailRecipientContributions,
+			"username":          configuration.UsernameFestivities,
+			"password":          configuration.SecretFestivities,
+			"emailCoffee":       configuration.EmailRecipientCoffee,
+			"emailContribution": configuration.EmailRecipientContributions,
 		})
 	} else {
 		return c.Status(401).JSON(fiber.Map{
@@ -51,25 +49,25 @@ func (a *ApiSerice) ValidatePassword(c *fiber.Ctx) error {
 	}
 }
 
-func (a *ApiSerice) GetFormData(c *fiber.Ctx) error {
+func GetFormData(c *fiber.Ctx) error {
 	var data models.FormData
 	if err := c.BodyParser(&data); err != nil {
 		return c.Status(400).JSON(fiber.Map{"error": "Cannot parse JSON"})
 	}
 
-	if err := a.mongo.InsertNewForm(&data); err != nil {
+	if err := mongo.InsertNewForm(&data); err != nil {
 		log.Printf("Error inserting new form data %s", err.Error())
 	}
 
-	mailer, err := GetMailer(a.configContainer)
+	mailer, err := GetMailer(configuration)
 	if err != nil {
 		log.Println(err)
 		return c.Status(500).JSON(fiber.Map{"error": "Error sending email"})
 	}
 
-	sendMessageGeneral(a.configContainer, mailer, &data)
-	sendMessageCoffe(a.configContainer, mailer, &data)
-	sendMessageContributions(a.configContainer, mailer, &data)
+	sendMessageGeneral(configuration, mailer, &data)
+	sendMessageCoffe(configuration, mailer, &data)
+	sendMessageContributions(configuration, mailer, &data)
 
 	return c.JSON(fiber.Map{"message": "Emails sent successfully"})
 

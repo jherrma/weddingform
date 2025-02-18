@@ -1,4 +1,4 @@
-package services
+package config
 
 import (
 	"log"
@@ -26,7 +26,20 @@ const (
 	MONGO_COLLECTION            = "MONGODB_COLLECTION"
 )
 
-func GetConfigFromEnvs() *models.ConfigContainer {
+var (
+	config *models.ConfigContainer
+)
+
+func GetConfig() *models.ConfigContainer {
+	if config == nil {
+		config = loadConfig()
+	}
+
+	return config
+
+}
+
+func loadConfig() *models.ConfigContainer {
 	err := godotenv.Load()
 	if err != nil {
 		log.Println("No .env file found")

@@ -2,7 +2,7 @@ package services
 
 import (
 	"time"
-	"weddingform/server/models"
+	"weddingform/server/config"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/basicauth"
@@ -24,11 +24,13 @@ func GetLimiter() fiber.Handler {
 	})
 }
 
-func GetBasicAuth(configContainer *models.ConfigContainer) fiber.Handler {
+func GetBasicAuth() fiber.Handler {
+	configuration := config.GetConfig()
+
 	return basicauth.New(basicauth.Config{
 		Users: map[string]string{
-			configContainer.UsernameCoffee:      configContainer.SecretCoffee,
-			configContainer.UsernameFestivities: configContainer.SecretFestivities,
+			configuration.UsernameCoffee:      configuration.SecretCoffee,
+			configuration.UsernameFestivities: configuration.SecretFestivities,
 		},
 		Unauthorized: func(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
